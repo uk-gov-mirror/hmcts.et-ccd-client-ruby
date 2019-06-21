@@ -33,6 +33,27 @@ client..caseworker_search_latest_by_reference('222000000100', case_type_id: 'Emp
 
 ```
 
+## Configuration
+
+To configure the client, use a block like this :-
+
+```
+EtCcdClient.config do |c|
+    c.auth_base_url = <value>
+    c.idam_base_url = <value>
+    c.data_store_base_url = <value>
+    c.jurisdiction_id = <value>
+    c.microservice = <value>
+    c.logger = Rails.logger
+end
+
+```
+
+If you don't set any of these, the defaults should work with local ccd-docker
+
+If you don't set the logger, no logging output will be sent.
+If you share your rails logger or configure a new one, only debug output is set generally.
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
