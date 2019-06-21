@@ -5,7 +5,7 @@ require 'et_ccd_client/config'
 require 'json'
 module EtCcdClient
   class Client
-    def initialize(idam_client: IdamClient.new, config: Config.instance)
+    def initialize(idam_client: IdamClient.new, config: ::EtCcdClient.config)
       self.idam_client = idam_client
       self.config = config
     end
