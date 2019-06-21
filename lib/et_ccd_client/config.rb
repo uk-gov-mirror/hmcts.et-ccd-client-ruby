@@ -1,5 +1,5 @@
 require 'singleton'
-require 'null_logger'
+require 'et_ccd_client/null_logger'
 module EtCcdClient
   class Config
     include Singleton
