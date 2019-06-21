@@ -1,4 +1,5 @@
 require 'singleton'
+require 'null_logger'
 module EtCcdClient
   class Config
     include Singleton
@@ -6,6 +7,7 @@ module EtCcdClient
     attr_accessor :auth_base_url, :idam_base_url, :data_store_base_url
     attr_accessor :user_role, :user_id
     attr_accessor :jurisdiction_id, :microservice
+    attr_accessor :logger
 
     def idam_service_token_exchange_url
       "#{auth_base_url}/testing-support/lease"
@@ -45,6 +47,7 @@ module EtCcdClient
       self.user_role = 'caseworker,caseworker-test,caseworker-employment-tribunal-manchester,caseworker-employment,caseworker-employment-tribunal-manchester-caseofficer,caseworker-publiclaw-localAuthority'
       self.jurisdiction_id = 'EMPLOYMENT'
       self.microservice = 'ccd_gw'
+      self.logger = NullLogger.new
     end
   end
 end
