@@ -1,4 +1,5 @@
 require "et_ccd_client/version"
+require 'et_ccd_client/null_logger'
 require 'et_ccd_client/config'
 require 'et_ccd_client/idam_client'
 require 'et_ccd_client/client'
