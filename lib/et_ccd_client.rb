@@ -5,5 +5,9 @@ require 'et_ccd_client/client'
 
 module EtCcdClient
   class Error < StandardError; end
-  # Your code goes here...
+  
+  def self.config
+    yield Config.instance if block_given?
+    Config.instance
+  end
 end
