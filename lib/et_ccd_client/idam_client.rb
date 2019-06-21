@@ -36,7 +36,7 @@ module EtCcdClient
 
     def exchange_user_token(user_id, user_role)
       url = config.idam_user_token_exchange_url
-      logger.debug("ET > Idam user token exchange (#{url}) - id: #{id} role: #{user_role}")
+      logger.debug("ET > Idam user token exchange (#{url}) - id: #{user_id} role: #{user_role}")
       resp = RestClient.post(url, id: user_id, role: user_role)
       resp.body.tap do |resp_body|
         logger.debug "ET < Idam user token exchange - #{resp_body}"
