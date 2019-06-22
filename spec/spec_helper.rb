@@ -11,4 +11,6 @@ RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
+
+  Dir.glob(File.absolute_path(File.join('.', 'support', '**', '*.rb'), __dir__)).each {|f| require f}
 end

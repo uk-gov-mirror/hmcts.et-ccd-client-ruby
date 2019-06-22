@@ -1,9 +1,12 @@
 RSpec.describe EtCcdClient do
+  subject(:mod) { EtCcdClient }
   it "has a version number" do
     expect(EtCcdClient::VERSION).not_to be nil
   end
 
-  it "does something useful" do
-    expect(false).to eq(true)
+  describe ".config" do
+    it "returns the config instance" do
+      expect(mod.config).to be_an_instance_of(::EtCcdClient::Config)
+    end
   end
 end
