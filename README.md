@@ -29,7 +29,7 @@ Or install it yourself as:
 client = EtApiClient::Client.new
 client.login
 
-client..caseworker_search_latest_by_reference('222000000100', case_type_id: 'EmpTrib_MVP_1.0_Manc')
+client.caseworker_search_latest_by_reference('222000000100', case_type_id: 'EmpTrib_MVP_1.0_Manc')
 
 ```
 
@@ -44,7 +44,7 @@ EtCcdClient.config do |c|
     c.data_store_base_url = <value>
     c.jurisdiction_id = <value>
     c.microservice = <value>
-    c.logger = Rails.logger
+    c.logger = Rails.logger (or any instance of an active support logger if you dont have rails)
 end
 
 ```
