@@ -133,7 +133,7 @@ RSpec.describe EtCcdClient::Client do
     it "performs the correct http request" do
       # Arrange - stub the url
       stub = stub_request(:post, "http://data.mock.com/caseworkers/51/jurisdictions/mockjid/case-types/mycasetypeid/cases").
-        with(headers: {"Content-Type": "application/json"}).
+        with(headers: {"Content-Type": "application/x-www-form-urlencoded"}).
         to_return(body: '{}', headers: default_response_headers, status: 200)
 
       # Act - Call the method

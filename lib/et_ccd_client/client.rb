@@ -41,9 +41,8 @@ module EtCcdClient
       logger.tagged('EtCcdClient::Client') do
         tpl = Addressable::Template.new(config.create_case_url)
         url = tpl.expand(uid: config.user_id, jid: config.jurisdiction_id, ctid: case_type_id).to_s
-        json_data = data.to_json
-        logger.debug("ET > Caseworker create case (#{url}) - #{json_data}")
-        resp = RestClient.post(url, json_data, content_type: 'application/json', 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}")
+        logger.debug("ET > Caseworker create case (#{url}) - #{data.to_json}")
+        resp = RestClient.post(url, data, content_type: 'application/json', 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}")
         resp_body = resp.body
         logger.debug "ET < Case worker create case - #{resp_body}"
         JSON.parse(resp_body)
