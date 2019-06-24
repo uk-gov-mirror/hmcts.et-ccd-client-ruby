@@ -14,8 +14,8 @@ module EtCcdClient
 
     def login(user_id: config.user_id, role: config.user_role)
       logger.tagged('EtCcdClient::IdamClient') do
-        self.service_token = exchange_service_token unless service_token.present?
-        self.user_token = exchange_user_token(user_id, role) unless user_token.present?
+        self.service_token = exchange_service_token
+        self.user_token = exchange_user_token(user_id, role)
       end
     end
 
