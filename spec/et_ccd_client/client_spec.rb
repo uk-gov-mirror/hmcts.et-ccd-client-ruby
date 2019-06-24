@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'et_ccd_client'
 RSpec.describe EtCcdClient::Client do
-  let(:mock_idam_client) { instance_spy(EtCcdClient::IdamClient, service_token: 'mockservicetoken') }
+  let(:mock_idam_client) { instance_spy(EtCcdClient::IdamClient, service_token: 'mockservicetoken', login: nil) }
   let(:mock_config) { instance_double(EtCcdClient::Config, mock_config_values) }
   let(:mock_config_values) do
     {
@@ -35,6 +35,7 @@ RSpec.describe EtCcdClient::Client do
       # Assert - Ensure it calls login in idam client with no arguments
       expect(mock_idam_client).to have_received(:login).with(no_args)
     end
+
     it "delegates to the idam client with specified user_id" do
       # Act - Call with user_id
       client.login(user_id: 19)
@@ -42,6 +43,7 @@ RSpec.describe EtCcdClient::Client do
       # Assert - Ensure it calls login in idam client with no arguments
       expect(mock_idam_client).to have_received(:login).with(user_id: 19)
     end
+
     it "delegates to the idam client with specified role" do
       # Act - Call with user_id
       client.login(role: 'testrole')
@@ -195,12 +197,74 @@ RSpec.describe EtCcdClient::Client do
 
     it "logs the response under error conditions" do
       # Arrange - stub the url
-      resp_body = '{"message": "Not found"}'
+      resp_body = {
+          "exception": "uk.gov.hmcts.ccd.endpoint.exceptions.CaseValidationException",
+          "timestamp": "2019-06-23T17:13:07.282",
+          "status": 422,
+          "error": "Unprocessable Entity",
+          "message": "Case data validation failed",
+          "path": "/caseworkers/22/jurisdictions/EMPLOYMENT/case-types/EmpTrib_MVP_1.0_Manc/cases",
+          "details": {
+              "field_errors": [
+                  {
+                      "id": "claimantType.claimant_addressUK.PostCode",
+                      "message": "1065^&%$£@():?><*& exceed maximum length 14"
+                  }
+              ]
+          }
+      }.to_json
       stub_request(:post, "http://data.mock.com/caseworkers/51/jurisdictions/mockjid/case-types/mycasetypeid/cases").
         to_return(body: resp_body, headers: default_response_headers, status: 422)
 
       # Act - Call the method
-      client.caseworker_case_create({}, case_type_id: 'mycasetypeid') rescue RestClient::UnprocessableEntity
+      client.caseworker_case_create({}, case_type_id: 'mycasetypeid') rescue EtCcdClient::Exceptions::UnprocessableEntity
+
+      # Assert
+      expect(mock_logger).to have_received(:debug).with("ET < Case worker create case (ERROR) - #{resp_body}")
+    end
+
+    it "re raises the response with the response body available under error conditions with detailed message" do
+      # Arrange - stub the url
+      resp_body = {
+          "exception": "uk.gov.hmcts.ccd.endpoint.exceptions.CaseValidationException",
+          "timestamp": "2019-06-23T17:13:07.282",
+          "status": 422,
+          "error": "Unprocessable Entity",
+          "message": "Case data validation failed",
+          "path": "/caseworkers/22/jurisdictions/EMPLOYMENT/case-types/EmpTrib_MVP_1.0_Manc/cases",
+          "details": {
+              "field_errors": [
+                  {
+                      "id": "claimantType.claimant_addressUK.PostCode",
+                      "message": "1065^&%$£@():?><*& exceed maximum length 14"
+                  }
+              ]
+          }
+      }.to_json
+      stub_request(:post, "http://data.mock.com/caseworkers/51/jurisdictions/mockjid/case-types/mycasetypeid/cases").
+        to_return(body: resp_body, headers: default_response_headers, status: 422)
+
+      # Act - Call the method
+      case_create = -> { client.caseworker_case_create({}, case_type_id: 'mycasetypeid') }
+      expect(case_create).to raise_error(EtCcdClient::Exceptions::UnprocessableEntity) do |error|
+        expect(error.message).to include("claimantType.claimant_addressUK.PostCode => 1065^&%$£@():?><*& exceed maximum length 14")
+      end
+
+      # Assert
+      expect(mock_logger).to have_received(:debug).with("ET < Case worker create case (ERROR) - #{resp_body}")
+    end
+
+    it "re raises the response with the response body available under error conditions with standard message" do
+      # Arrange - stub the url
+      resp_body = "Unauthorized"
+      stub_request(:post, "http://data.mock.com/caseworkers/51/jurisdictions/mockjid/case-types/mycasetypeid/cases").
+        to_return(body: resp_body, headers: default_response_headers, status: 401)
+
+      # Act - Call the method
+      case_create = -> { client.caseworker_case_create({}, case_type_id: 'mycasetypeid') }
+      expect(case_create).to raise_error(EtCcdClient::Exceptions::Base) do |error|
+        expect(error.message).to include("Unauthorized")
+      end
 
       # Assert
       expect(mock_logger).to have_received(:debug).with("ET < Case worker create case (ERROR) - #{resp_body}")

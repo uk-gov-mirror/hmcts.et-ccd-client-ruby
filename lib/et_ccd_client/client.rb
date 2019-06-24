@@ -2,6 +2,7 @@ require "addressable/template"
 require 'rest_client'
 require 'et_ccd_client/idam_client'
 require 'et_ccd_client/config'
+require 'et_ccd_client/exceptions'
 require 'json'
 require 'forwardable'
 module EtCcdClient
@@ -48,7 +49,7 @@ module EtCcdClient
         JSON.parse(resp_body)
       rescue RestClient::Exception => e
         logger.debug "ET < Case worker create case (ERROR) - #{e.response.body}"
-        raise
+        raise Exceptions::Base.raise_exception(e)
       end
     end
 
