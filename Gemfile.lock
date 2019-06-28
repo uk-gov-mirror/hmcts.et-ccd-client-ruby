@@ -1,9 +1,10 @@
 PATH
   remote: .
   specs:
-    et_ccd_client (0.1.9)
+    et_ccd_client (0.1.10)
       addressable (~> 2.6)
       rest-client (~> 2.0, >= 2.0.2)
+      rotp (~> 5.0)
       webmock (~> 3.6)
 
 GEM
@@ -28,13 +29,15 @@ GEM
     parallel (1.17.0)
     parser (2.6.3.0)
       ast (~> 2.4.0)
-    public_suffix (3.1.0)
+    public_suffix (3.1.1)
     rainbow (3.0.0)
     rake (10.5.0)
     rest-client (2.0.2)
       http-cookie (>= 1.0.2, < 2.0)
       mime-types (>= 1.16, < 4.0)
       netrc (~> 0.8)
+    rotp (5.1.0)
+      addressable (~> 2.5)
     rspec (3.8.0)
       rspec-core (~> 3.8.0)
       rspec-expectations (~> 3.8.0)

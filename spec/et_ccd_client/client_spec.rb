@@ -10,11 +10,16 @@ RSpec.describe EtCcdClient::Client do
       data_store_base_url: 'http://data.mock.com',
       jurisdiction_id: 'mockjid',
       microservice: 'mockmicroservice',
+      microservice_secret: 'nottellingyouitsasecret',
       logger: mock_logger,
       user_id: 51,
       initiate_claim_event_id: 'mockinitiateevent',
       initiate_case_url: 'http://data.mock.com/caseworkers/{uid}/jurisdictions/{jid}/case-types/{ctid}/event-triggers/{etid}/token',
-      create_case_url: 'http://data.mock.com/caseworkers/{uid}/jurisdictions/{jid}/case-types/{ctid}/cases'
+      create_case_url: 'http://data.mock.com/caseworkers/{uid}/jurisdictions/{jid}/case-types/{ctid}/cases',
+      use_sidam: true,
+      sidam_username: 'm@m.com',
+      sidam_password: 'p',
+      verify_ssl: false
     }
   end
   let(:mock_logger) do
@@ -28,28 +33,78 @@ RSpec.describe EtCcdClient::Client do
   let(:default_response_headers) { { 'Content-Type' => 'application/json' } }
 
   describe "#login" do
-    it "delegates to the idam client with default values" do
-      # Act - Call with no arguments
-      client.login
+    context 'using sidam' do
+      it "delegates to the idam client with default values" do
+        # Act - Call with no arguments
+        client.login
 
-      # Assert - Ensure it calls login in idam client with no arguments
-      expect(mock_idam_client).to have_received(:login).with(no_args)
+        # Assert - Ensure it calls login in idam client with no arguments
+        expect(mock_idam_client).to have_received(:login).with(no_args)
+      end
+
+      it "delegates to the idam client with specified user_id" do
+        # Act - Call with user_id
+        client.login(username: 'username')
+
+        # Assert - Ensure it calls login in idam client with no arguments
+        expect(mock_idam_client).to have_received(:login).with(username: 'username')
+      end
+
+      it "delegates to the idam client with specified role" do
+        # Act - Call with user_id
+        client.login(password: 'password')
+
+        # Assert - Ensure it calls login in idam client with no arguments
+        expect(mock_idam_client).to have_received(:login).with(password: 'password')
+      end
+
+
     end
 
-    it "delegates to the idam client with specified user_id" do
-      # Act - Call with user_id
-      client.login(user_id: 19)
+    context 'using tidam' do
+      let(:mock_config_values) do
+        {
+            auth_base_url: 'http://auth.mock.com',
+            idam_base_url: 'http://idam.mock.com',
+            data_store_base_url: 'http://data.mock.com',
+            jurisdiction_id: 'mockjid',
+            microservice: 'mockmicroservice',
+            microservice_secret: 'nottellingyouitsasecret',
+            logger: mock_logger,
+            user_id: 51,
+            initiate_claim_event_id: 'mockinitiateevent',
+            initiate_case_url: 'http://data.mock.com/caseworkers/{uid}/jurisdictions/{jid}/case-types/{ctid}/event-triggers/{etid}/token',
+            create_case_url: 'http://data.mock.com/caseworkers/{uid}/jurisdictions/{jid}/case-types/{ctid}/cases',
+            use_sidam: false,
+            verify_ssl: false
+        }
+      end
+      let(:mock_idam_client) { instance_spy(EtCcdClient::TidamClient, service_token: 'mockservicetoken', login: nil) }
 
-      # Assert - Ensure it calls login in idam client with no arguments
-      expect(mock_idam_client).to have_received(:login).with(user_id: 19)
-    end
+      it "delegates to the idam client with default values" do
+        # Act - Call with no arguments
+        client.login
 
-    it "delegates to the idam client with specified role" do
-      # Act - Call with user_id
-      client.login(role: 'testrole')
+        # Assert - Ensure it calls login in idam client with no arguments
+        expect(mock_idam_client).to have_received(:login).with(no_args)
+      end
 
-      # Assert - Ensure it calls login in idam client with no arguments
-      expect(mock_idam_client).to have_received(:login).with(role: 'testrole')
+      it "delegates to the idam client with specified user_id" do
+        # Act - Call with user_id
+        client.login(user_id: 19)
+
+        # Assert - Ensure it calls login in idam client with no arguments
+        expect(mock_idam_client).to have_received(:login).with(user_id: 19)
+      end
+
+      it "delegates to the idam client with specified role" do
+        # Act - Call with user_id
+        client.login(role: 'testrole')
+
+        # Assert - Ensure it calls login in idam client with no arguments
+        expect(mock_idam_client).to have_received(:login).with(role: 'testrole')
+      end
+
     end
 
   end

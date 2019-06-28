@@ -3,7 +3,7 @@ require 'rest_client'
 require 'et_ccd_client/config'
 require 'rotp'
 module EtCcdClient
-  class IdamClient
+  class TidamClient
     attr_reader :service_token, :user_token
 
     def initialize(config: ::EtCcdClient.config)
@@ -13,10 +13,10 @@ module EtCcdClient
       self.user_token = nil
     end
 
-    def login(username: config.sidam_username, password: config.sidam_password)
+    def login(user_id: config.user_id, role: config.user_role)
       logger.tagged('EtCcdClient::IdamClient') do
         self.service_token = exchange_service_token
-        self.user_token = exchange_sidam_user_token(username, password)
+        self.user_token = exchange_tidam_user_token(user_id, role)
       end
     end
 
@@ -35,13 +35,13 @@ module EtCcdClient
       end
     end
 
-    def exchange_sidam_user_token(username, password)
+    def exchange_tidam_user_token(user_id, user_role)
       url = config.idam_user_token_exchange_url
-      logger.debug("ET > Idam user token exchange (#{url}) - username: #{username} password: '******'")
-      resp = RestClient::Request.execute(method: :post, url: url, payload: { username: username, password: password }, headers: { 'Content-Type' => 'application/x-www-form-urlencoded' }, verify_ssl: config.verify_ssl)
-      resp_body = resp.body
-      logger.debug "ET < Idam user token exchange - #{resp_body}"
-      JSON.parse(resp_body)['access_token']
+      logger.debug("ET > Idam user token exchange (#{url}) - id: #{user_id} role: #{user_role}")
+      resp = RestClient.post(url, id: user_id, role: user_role)
+      resp.body.tap do |resp_body|
+        logger.debug "ET < Idam user token exchange - #{resp_body}"
+      end
     end
 
     def otp

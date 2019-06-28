@@ -6,15 +6,16 @@ module EtCcdClient
 
     attr_accessor :auth_base_url, :idam_base_url, :data_store_base_url
     attr_accessor :user_role, :user_id
-    attr_accessor :jurisdiction_id, :microservice
+    attr_accessor :jurisdiction_id, :microservice, :microservice_secret
     attr_accessor :logger
+    attr_accessor :verify_ssl, :use_sidam, :sidam_username, :sidam_password
 
     def idam_service_token_exchange_url
-      "#{auth_base_url}/testing-support/lease"
+      "#{auth_base_url}/lease"
     end
 
     def idam_user_token_exchange_url
-      "#{idam_base_url}/testing-support/lease"
+      use_sidam ? "#{idam_base_url}/loginUser" : "#{idam_base_url}/testing-support/lease"
     end
 
     def create_case_url
@@ -47,7 +48,12 @@ module EtCcdClient
       self.user_role = 'caseworker,caseworker-test,caseworker-employment-tribunal-manchester,caseworker-employment,caseworker-employment-tribunal-manchester-caseofficer,caseworker-publiclaw-localAuthority'
       self.jurisdiction_id = 'EMPLOYMENT'
       self.microservice = 'ccd_gw'
+      self.microservice_secret = 'AAAAAAAAAAAAAAAC'
       self.logger = NullLogger.new
+      self.verify_ssl = true
+      self.use_sidam = true
+      self.sidam_username = 'm@m.com'
+      self.sidam_password = 'p'
     end
   end
 end
