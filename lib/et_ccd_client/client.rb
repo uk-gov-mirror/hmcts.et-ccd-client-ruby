@@ -6,11 +6,12 @@ require 'et_ccd_client/exceptions'
 require 'json'
 require 'forwardable'
 module EtCcdClient
+  # A client to interact with the CCD API (backend)
   class Client
     extend Forwardable
 
-    def initialize(idam_client: IdamClient.new, config: ::EtCcdClient.config)
-      self.idam_client = idam_client
+    def initialize(idam_client: nil, config: ::EtCcdClient.config)
+      self.idam_client = idam_client || (config.use_sidam ? IdamClient.new : TidamClient.new)
       self.config = config
       self.logger = config.logger
     end
@@ -25,7 +26,7 @@ module EtCcdClient
       logger.tagged('EtCcdClient::Client') do
         url = initiate_case_url(case_type_id)
         logger.debug("ET > Start case creation (#{url})")
-        resp = RestClient.get(url, content_type: 'application/json', 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}")
+        resp = RestClient::Request.execute(method: :get, url: url, headers: { content_type: 'application/json', 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}"}, verify_ssl: config.verify_ssl)
         logger.debug "ET < Start case creation - #{resp.body}"
         JSON.parse(resp.body)
       rescue RestClient::Exception => e

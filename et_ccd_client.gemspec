@@ -26,6 +26,8 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'addressable', '~> 2.6'
   spec.add_dependency 'rest-client', '~> 2.0', '>= 2.0.2'
   spec.add_dependency 'webmock', '~> 3.6'
+  spec.add_dependency 'rotp', '~> 5.0'
+  spec.add_dependency 'mechanize', '~> 2.7', '>= 2.7.6'
   spec.add_development_dependency "bundler", "~> 1.17"
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec", "~> 3.0"
