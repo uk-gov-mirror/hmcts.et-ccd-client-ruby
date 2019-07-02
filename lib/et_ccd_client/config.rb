@@ -25,7 +25,7 @@ module EtCcdClient
     end
 
     def cases_url
-      "#{data_store_base_url}/caseworkers/{uid}/jurisdictions/{jid}/case-types/{ctid}/cases{?query*}"
+      "#{data_store_base_url}#{cases_path}"
     end
 
     def cases_pagination_metadata_url
@@ -44,13 +44,17 @@ module EtCcdClient
       "#{idam_ui_base_url}/config"
     end
 
+    def cases_path
+      "/caseworkers/{uid}/jurisdictions/{jid}/case-types/{ctid}/cases{?query*}"
+    end
+
     private
 
     def initialize
       self.auth_base_url = 'http://localhost:4502'
       self.idam_base_url =  'http://localhost:4501'
       self.data_store_base_url = 'http://localhost:4452'
-      self.idam_ui_base_url = 'https://localhost:3451'
+      self.idam_ui_base_url = 'http://localhost:3451'
       self.idam_ui_redirect_url = 'http://localhost:3451/oauth2redirect'
       self.user_id = 22
       self.user_role = 'caseworker,caseworker-test,caseworker-employment-tribunal-manchester,caseworker-employment,caseworker-employment-tribunal-manchester-caseofficer,caseworker-publiclaw-localAuthority'

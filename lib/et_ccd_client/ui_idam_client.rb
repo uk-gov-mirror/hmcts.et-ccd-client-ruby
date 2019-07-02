@@ -6,8 +6,9 @@ module EtCcdClient
   class UiIdamClient
     attr_reader :service_token, :user_token
 
-    def initialize(config: ::EtCcdClient.config)
+    def initialize(config: ::EtCcdClient.config, remote_config: ::EtCcdClient.ui_remote_config)
       self.config = config
+      self.remote_config = remote_config
       self.logger = config.logger
       self.agent = Mechanize.new
       agent.verify_mode = config.verify_ssl ? OpenSSL::SSL::VERIFY_PEER : OpenSSL::SSL::VERIFY_NONE
@@ -22,7 +23,7 @@ module EtCcdClient
     private
 
     attr_writer :user_token
-    attr_accessor :config, :logger, :agent
+    attr_accessor :config, :logger, :agent, :remote_config
 
     def exchange_sidam_user_token(username, password)
       url = login_url
@@ -33,9 +34,9 @@ module EtCcdClient
     end
 
     def get_access_token(oauth_code)
-      uri = Addressable::URI.parse(dynamic_config['oauth2_token_endpoint_url'])
+      uri = Addressable::URI.parse(remote_config.oauth2_token_endpoint_url)
       uri.query_values = { code: oauth_code, redirect_uri: config.idam_ui_redirect_url }
-      page = agent.get(uri.to_s)
+      agent.get(uri.to_s)
       agent.cookies.detect { |cookie| cookie.name == 'accessToken' }.value
     end
 
@@ -49,17 +50,13 @@ module EtCcdClient
     end
 
     def login_url
-      uri = Addressable::URI.parse dynamic_config['login_url']
+      uri = Addressable::URI.parse remote_config.login_url
       uri.query_values = {
           response_type: :code,
-          client_id: dynamic_config['oauth2_client_id'],
+          client_id: remote_config.oauth2_client_id,
           redirect_uri: config.idam_ui_redirect_url
       }
       uri.to_s
-    end
-
-    def dynamic_config
-      @dynamic_config ||= JSON.parse(agent.get(config.idam_ui_config_url).body)
     end
   end
 end

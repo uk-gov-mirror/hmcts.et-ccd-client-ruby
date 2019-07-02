@@ -10,9 +10,10 @@ module EtCcdClient
   class UiClient
     extend Forwardable
 
-    def initialize(ui_idam_client: UiIdamClient.new, config: ::EtCcdClient.config)
+    def initialize(ui_idam_client: UiIdamClient.new, config: ::EtCcdClient.config, remote_config: ::EtCcdClient.ui_remote_config)
       self.ui_idam_client = ui_idam_client
       self.config = config
+      self.remote_config = remote_config
       self.logger = config.logger
     end
 
@@ -26,10 +27,11 @@ module EtCcdClient
     #
     # @return [Array<Hash>] The json response from the server
     def caseworker_search_by_reference(reference, case_type_id:, page: 1, sort_direction: 'desc')
-      tpl = Addressable::Template.new(config.cases_url)
-      url = tpl.expand(uid: config.user_id, jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.feeGroupReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
-      resp = RestClient.get(url, content_type: 'application/json', accept: 'application/json')
-      JSON.parse(resp.body)
+      tpl = Addressable::Template.new(config.cases_path)
+      path = tpl.expand(uid: config.user_id, jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.feeGroupReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
+      url = "#{remote_config.api_url}#{path}"
+      resp = RestClient::Request.execute(method: :get, url: url, headers: { content_type: 'application/json', accept: 'application/json' }, cookies: { accessToken: ui_idam_client.user_token })
+      JSON.parse(resp.body)["results"]
     end
 
     # Search for the latest case matching the reference.  Useful for testing
@@ -43,6 +45,6 @@ module EtCcdClient
 
     private
 
-    attr_accessor :ui_idam_client, :config, :logger
+    attr_accessor :ui_idam_client, :config, :remote_config, :logger
   end
 end
