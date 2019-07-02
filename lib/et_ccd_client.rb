@@ -4,6 +4,7 @@ require 'et_ccd_client/config'
 require 'et_ccd_client/idam_client'
 require 'et_ccd_client/tidam_client'
 require 'et_ccd_client/client'
+require 'et_ccd_client/ui_client'
 require 'et_ccd_client/exceptions'
 
 module EtCcdClient

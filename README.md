@@ -1,10 +1,14 @@
 # EtCcdClient
 
-The ET CCD Client is a ruby interface to the CCD API specifically for employment
+The ET CCD Client is a ruby interface to the CCD API and the CCD UI API specifically for employment
 tribunals.
 
 Note that this is general purpose CCD stuff, but this gem cannot claim to be a full CCD client
-as it only has methods specific to employment tribunal
+as it only has methods specific to employment tribunal.
+
+In general, the EtApiClient::Client is used for the main CCD API where the secret is known and the
+EtApiClient::UiClient is used to access the UI (front end) API where a username and password is known (generally
+ in a test environment)
 
 ## Installation
 
@@ -22,7 +26,7 @@ Or install it yourself as:
 
     $ gem install et_ccd_client
 
-## Usage
+## Usage (Main CCD API)
 
 ```
 
@@ -33,6 +37,15 @@ client.caseworker_search_latest_by_reference('222000000100', case_type_id: 'EmpT
 
 ```
 
+## Usage (UI API)
+
+```
+client = EtApiClient::UiClient.new
+client.login
+
+client.search_latest_by_reference('222000000100', case_type_id: 'EmpTrib_MVP_1.0_Manc')
+
+```
 ## Configuration
 
 To configure the client, use a block like this :-
@@ -44,6 +57,14 @@ EtCcdClient.config do |c|
     c.data_store_base_url = <value>
     c.jurisdiction_id = <value>
     c.microservice = <value>
+    c.microservice_secret = <value>
+    c.idam_ui_base_url = <value> (Only needed if using UI API)
+    c.idam_ui_redirect_url = <value> (Only needed if using UI API)
+    c.use_sidam = <value> (If true uses sidam - else tidam)
+    c.sidam_username = <value> (Only needed if use_sidam is true)
+    c.sidam_password = value (Only needed if use_sidam is true)
+    c.user_id = <value> (Only needed if use_sidam is false)
+    c.user_role = <value> (Only needed if use_sidam is false)
     c.logger = Rails.logger (or any instance of an active support logger if you dont have rails)
 end
 

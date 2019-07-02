@@ -6,6 +6,7 @@ require 'et_ccd_client/exceptions'
 require 'json'
 require 'forwardable'
 module EtCcdClient
+  # A client to interact with the CCD API (backend)
   class Client
     extend Forwardable
 
