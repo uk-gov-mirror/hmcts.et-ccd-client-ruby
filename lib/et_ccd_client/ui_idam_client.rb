@@ -37,7 +37,7 @@ module EtCcdClient
 
     def get_access_token(oauth_code)
       uri = Addressable::URI.parse(remote_config.oauth2_token_endpoint_url)
-      uri.query_values = { code: oauth_code, redirect_uri: config.idam_ui_redirect_url }
+      uri.query_values = { code: oauth_code, redirect_uri: config.case_management_ui_redirect_url }
       agent.get(uri.to_s)
       agent.cookies.detect { |cookie| cookie.name == 'accessToken' }.value
     end
@@ -65,7 +65,7 @@ module EtCcdClient
       uri.query_values = {
           response_type: :code,
           client_id: remote_config.oauth2_client_id,
-          redirect_uri: config.idam_ui_redirect_url
+          redirect_uri: config.case_management_ui_redirect_url
       }
       uri.to_s
     end

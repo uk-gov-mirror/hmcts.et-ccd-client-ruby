@@ -5,12 +5,12 @@ module EtCcdClient
   class Config
     include Singleton
 
-    attr_accessor :auth_base_url, :idam_base_url, :data_store_base_url, :idam_ui_base_url
+    attr_accessor :auth_base_url, :idam_base_url, :data_store_base_url, :case_management_ui_base_url
     attr_accessor :user_role, :user_id
     attr_accessor :jurisdiction_id, :microservice, :microservice_secret
     attr_accessor :logger
     attr_accessor :verify_ssl, :use_sidam, :sidam_username, :sidam_password
-    attr_accessor :idam_ui_redirect_url, :idam_ui_client_id
+    attr_accessor :case_management_ui_redirect_url
 
     def idam_service_token_exchange_url
       "#{auth_base_url}/lease"
@@ -40,8 +40,8 @@ module EtCcdClient
       'initiateCase'
     end
 
-    def idam_ui_config_url
-      "#{idam_ui_base_url}/config"
+    def case_management_ui_config_url
+      "#{case_management_ui_base_url}/config"
     end
 
     def cases_path
@@ -58,8 +58,8 @@ module EtCcdClient
       self.auth_base_url = 'http://localhost:4502'
       self.idam_base_url =  'http://localhost:4501'
       self.data_store_base_url = 'http://localhost:4452'
-      self.idam_ui_base_url = 'http://localhost:3451'
-      self.idam_ui_redirect_url = 'http://localhost:3451/oauth2redirect'
+      self.case_management_ui_redirect_url = 'http://localhost:3451/oauth2redirect'
+      self.case_management_ui_base_url = 'http://localhost:3451'
       self.user_id = 22
       self.user_role = 'caseworker,caseworker-test,caseworker-employment-tribunal-manchester,caseworker-employment,caseworker-employment-tribunal-manchester-caseofficer,caseworker-publiclaw-localAuthority'
       self.jurisdiction_id = 'EMPLOYMENT'

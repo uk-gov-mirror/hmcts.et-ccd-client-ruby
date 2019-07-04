@@ -13,7 +13,7 @@ module EtCcdClient
     private
 
     def initialize
-      dynamic_config = JSON.parse(RestClient.get(Config.instance.idam_ui_config_url).body)
+      dynamic_config = JSON.parse(RestClient.get(Config.instance.case_management_ui_config_url).body)
       dynamic_config.each_pair do |key, value|
         setter = :"#{key}="
         send(setter, value) if respond_to?(setter, true)
