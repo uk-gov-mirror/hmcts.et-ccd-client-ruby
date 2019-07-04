@@ -4,25 +4,27 @@ require 'et_ccd_client/config'
 require 'rotp'
 module EtCcdClient
   class TidamClient
-    attr_reader :service_token, :user_token
+    attr_reader :service_token, :user_token, :user_details
 
     def initialize(config: ::EtCcdClient.config)
       self.config = config
       self.logger = config.logger
       self.service_token = nil
       self.user_token = nil
+      self.user_details = nil
     end
 
     def login(user_id: config.user_id, role: config.user_role)
       logger.tagged('EtCcdClient::IdamClient') do
         self.service_token = exchange_service_token
         self.user_token = exchange_tidam_user_token(user_id, role)
+        self.user_details = get_user_details(user_id, role)
       end
     end
 
     private
 
-    attr_writer :service_token, :user_token
+    attr_writer :service_token, :user_token, :user_details
     attr_accessor :config, :logger
 
     def exchange_service_token
@@ -42,6 +44,13 @@ module EtCcdClient
       resp.body.tap do |resp_body|
         logger.debug "ET < Idam user token exchange - #{resp_body}"
       end
+    end
+
+    def get_user_details(user_id, role)
+      {
+          'id' => user_id,
+          'roles' => role.split(',').map(&:strip)
+      }
     end
 
     def otp

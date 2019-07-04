@@ -26,7 +26,7 @@ module EtCcdClient
       logger.tagged('EtCcdClient::Client') do
         url = initiate_case_url(case_type_id)
         logger.debug("ET > Start case creation (#{url})")
-        resp = RestClient::Request.execute(method: :get, url: url, headers: { content_type: 'application/json', 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}"}, verify_ssl: config.verify_ssl)
+        resp = RestClient::Request.execute(method: :get, url: url, headers: { content_type: 'application/json', 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}", 'user-id' => idam_client.user_details['id'], 'user-roles' => idam_client.user_details['roles'].join(',')}, verify_ssl: config.verify_ssl)
         logger.debug "ET < Start case creation - #{resp.body}"
         JSON.parse(resp.body)
       rescue RestClient::Exception => e
@@ -42,7 +42,7 @@ module EtCcdClient
     def caseworker_case_create(data, case_type_id:)
       logger.tagged('EtCcdClient::Client') do
         tpl = Addressable::Template.new(config.create_case_url)
-        url = tpl.expand(uid: config.user_id, jid: config.jurisdiction_id, ctid: case_type_id).to_s
+        url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id).to_s
         logger.debug("ET > Caseworker create case (#{url}) - #{data.to_json}")
         resp = RestClient.post(url, data, content_type: 'application/json', 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}")
         resp_body = resp.body
@@ -63,7 +63,7 @@ module EtCcdClient
     # @return [Array<Hash>] The json response from the server
     def caseworker_search_by_reference(reference, case_type_id:, page: 1, sort_direction: 'desc')
       tpl = Addressable::Template.new(config.cases_url)
-      url = tpl.expand(uid: config.user_id, jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.feeGroupReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
+      url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.feeGroupReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
       resp = RestClient.get(url, content_type: 'application/json', accept: 'application/json', 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}")
       JSON.parse(resp.body)
     end
@@ -79,7 +79,7 @@ module EtCcdClient
 
     def caseworker_cases_pagination_metadata(case_type_id:, query: {})
       tpl = Addressable::Template.new(config.cases_pagination_metadata_url)
-      url = tpl.expand(uid: config.user_id, jid: config.jurisdiction_id, ctid: case_type_id, query: query).to_s
+      url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: query).to_s
       meta_resp = RestClient.get(url, content_type: 'application/json', accept: 'application/json', 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}")
       JSON.parse(meta_resp)
     end
@@ -88,7 +88,7 @@ module EtCcdClient
 
     def initiate_case_url(case_type_id)
       tpl = Addressable::Template.new(config.initiate_case_url)
-      url = tpl.expand(uid: config.user_id, jid: config.jurisdiction_id, ctid: case_type_id, etid: config.initiate_claim_event_id).to_s
+      url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, etid: config.initiate_claim_event_id).to_s
     end
 
     attr_accessor :idam_client, :config, :logger

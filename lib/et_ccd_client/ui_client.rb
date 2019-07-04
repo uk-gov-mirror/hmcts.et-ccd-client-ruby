@@ -28,7 +28,7 @@ module EtCcdClient
     # @return [Array<Hash>] The json response from the server
     def caseworker_search_by_reference(reference, case_type_id:, page: 1, sort_direction: 'desc')
       tpl = Addressable::Template.new(config.cases_path)
-      path = tpl.expand(uid: config.user_id, jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.feeGroupReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
+      path = tpl.expand(uid: ui_idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.feeGroupReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
       url = "#{remote_config.api_url}#{path}"
       resp = RestClient::Request.execute(method: :get, url: url, headers: { content_type: 'application/json', accept: 'application/json' }, cookies: { accessToken: ui_idam_client.user_token })
       JSON.parse(resp.body)["results"]

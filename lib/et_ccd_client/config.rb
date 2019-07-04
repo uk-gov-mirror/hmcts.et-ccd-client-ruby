@@ -48,6 +48,10 @@ module EtCcdClient
       "/caseworkers/{uid}/jurisdictions/{jid}/case-types/{ctid}/cases{?query*}"
     end
 
+    def user_details_url
+      "#{idam_base_url}/details"
+    end
+
     private
 
     def initialize
