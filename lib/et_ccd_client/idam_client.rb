@@ -18,7 +18,7 @@ module EtCcdClient
       logger.tagged('EtCcdClient::IdamClient') do
         self.service_token = exchange_service_token
         self.user_token = exchange_sidam_user_token(username, password)
-        self.user_details = get_user_details
+        self.user_details = fetch_user_details
       end
     end
 
@@ -31,7 +31,7 @@ module EtCcdClient
       url = config.idam_service_token_exchange_url
       data = { microservice: config.microservice, oneTimePassword: otp }.to_json
       logger.debug("ET > Idam service token exchange (#{url}) - #{data}")
-      resp = RestClient.post(url, data, content_type: 'application/json')
+      resp = RestClient::Request.execute(method: :post, url: url, payload: data, headers: { content_type: 'application/json' }, verify_ssl: config.verify_ssl)
       resp.body.tap do |resp_body|
         logger.debug "ET < Idam service token exchange - #{resp_body}"
       end
@@ -46,7 +46,7 @@ module EtCcdClient
       JSON.parse(resp_body)['access_token']
     end
 
-    def get_user_details
+    def fetch_user_details
       url = config.user_details_url
       logger.debug("ET > Idam get user details (#{url})")
       resp = RestClient::Request.execute(method: :get, url: url, headers: { 'Accept' => 'application/json', 'Authorization' => user_token }, verify_ssl: config.verify_ssl)

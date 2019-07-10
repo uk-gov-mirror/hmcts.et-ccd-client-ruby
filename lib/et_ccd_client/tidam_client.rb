@@ -31,7 +31,7 @@ module EtCcdClient
       url = config.idam_service_token_exchange_url
       data = { microservice: config.microservice, oneTimePassword: otp }.to_json
       logger.debug("ET > Idam service token exchange (#{url}) - #{data}")
-      resp = RestClient.post(url, data, content_type: 'application/json')
+      resp = RestClient::Request.execute(method: :post, url: url, payload: data, headers: { content_type: 'application/json' }, verify_ssl: config.verify_ssl)
       resp.body.tap do |resp_body|
         logger.debug "ET < Idam service token exchange - #{resp_body}"
       end
@@ -40,7 +40,7 @@ module EtCcdClient
     def exchange_tidam_user_token(user_id, user_role)
       url = config.idam_user_token_exchange_url
       logger.debug("ET > Idam user token exchange (#{url}) - id: #{user_id} role: #{user_role}")
-      resp = RestClient.post(url, id: user_id, role: user_role)
+      resp = RestClient::Request.execute(method: :post, url: url, payload: { id: user_id, role: user_role }, verify_ssl: config.verify_ssl)
       resp.body.tap do |resp_body|
         logger.debug "ET < Idam user token exchange - #{resp_body}"
       end
@@ -48,8 +48,8 @@ module EtCcdClient
 
     def get_user_details(user_id, role)
       {
-          'id' => user_id,
-          'roles' => role.split(',').map(&:strip)
+        'id' => user_id,
+        'roles' => role.split(',').map(&:strip)
       }
     end
 
