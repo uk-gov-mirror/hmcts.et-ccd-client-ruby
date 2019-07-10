@@ -3,6 +3,7 @@ require 'et_ccd_client'
 require 'rotp'
 RSpec.describe EtCcdClient::IdamClient do
   subject(:client) { described_class.new config: mock_config }
+
   let(:test_secret) { 'AAAAAAAAAAAAAAAC' }
   let(:mock_config) { instance_double(EtCcdClient::Config, mock_config_values) }
   let(:mock_config_values) do
@@ -23,7 +24,8 @@ RSpec.describe EtCcdClient::IdamClient do
       use_sidam: true,
       sidam_username: 'm@m.com',
       sidam_password: 'p',
-      verify_ssl: false
+      verify_ssl: false,
+      user_details_url: "http://idam.mock.com/details"
     }
   end
   let(:mock_logger) do
@@ -35,12 +37,12 @@ RSpec.describe EtCcdClient::IdamClient do
   end
   let(:mock_positive_response) do
     {
-        "access_token": "myusertoken",
-        "scope": "acr openid profile roles authorities",
-        "id_token": "myidtokenshouldntbeused",
-        "token_type": "Bearer",
-        "expires_in": "28799",
-        "api_auth_token": "myauthapitokenshouldntbeused"
+      "access_token": "myusertoken",
+      "scope": "acr openid profile roles authorities",
+      "id_token": "myidtokenshouldntbeused",
+      "token_type": "Bearer",
+      "expires_in": "28799",
+      "api_auth_token": "myauthapitokenshouldntbeused"
     }.to_json
   end
 
@@ -49,21 +51,20 @@ RSpec.describe EtCcdClient::IdamClient do
 
       # Arrange - Setup the stubs
       totp = ROTP::TOTP.new(test_secret)
-      stub_request(:post, "http://auth.mock.com/lease").with(body: {'microservice': 'mockmicroservice', 'oneTimePassword': an_instance_of(String)}).to_return do |request|
+      user_details = { 'id' => 'mockid', 'roles' => ['mockrole1', 'mockrole2'] }
+      stub_request(:post, "http://auth.mock.com/lease").with(body: { 'microservice': 'mockmicroservice', 'oneTimePassword': an_instance_of(String) }).to_return do |request|
         payload = JSON.parse(request.body)
         expect(totp.verify(payload['oneTimePassword'], drift_behind: 15)).not_to be_nil
         { body: "myservicetoken" }
       end
-      stub_request(:post, "http://idam.mock.com/loginUser").with(body: {'username': 'm@m.com', password: 'p'}).to_return(body: mock_positive_response)
+      stub_request(:post, "http://idam.mock.com/loginUser").with(body: { 'username': 'm@m.com', password: 'p' }).to_return(body: mock_positive_response)
+      stub_request(:get, "http://idam.mock.com/details").with(headers: { 'Accept' => 'application/json' }).to_return(status: 200, body: user_details.to_json)
 
       # Act
       client.login(username: 'm@m.com', password: 'p')
 
       # Assert - Make sure the tokens are available to others
-      expect(client).to have_attributes service_token: 'myservicetoken', user_token: 'myusertoken'
+      expect(client).to have_attributes service_token: 'myservicetoken', user_token: 'myusertoken', user_details: user_details
     end
-
-
   end
-
 end
