@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    et_ccd_client (0.1.18)
+    et_ccd_client (0.1.19)
       addressable (~> 2.6)
       mechanize (~> 2.7, >= 2.7.6)
       rest-client (~> 2.0, >= 2.0.2)

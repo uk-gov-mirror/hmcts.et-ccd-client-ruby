@@ -50,6 +50,37 @@ module EtCcdClient
       results.first
     end
 
+    # Search for cases by multiples reference - useful for testing
+    # @param [String] reference The multiples reference number to search for
+    # @param [String] case_type_id The case type ID to set the search scope to
+    # @param [Integer] page - The page number to fetch
+    # @param [String] sort_direction (defaults to 'desc') - Change to 'asc' to do oldest first
+    #
+    # @return [Array<Hash>] The json response from the server
+    def caseworker_search_by_multiple_reference(reference, case_type_id:, page: 1, sort_direction: 'desc')
+      logger.tagged('EtCcdClient::UiClient') do
+        tpl = Addressable::Template.new(config.cases_path)
+        path = tpl.expand(uid: ui_idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.multipleReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
+        url = "#{remote_config.api_url}#{path}"
+        logger.debug("ET > Caseworker search by multiple reference (#{url})")
+        resp = RestClient::Request.execute(method: :get, url: url, headers: { content_type: 'application/json', accept: 'application/json' }, cookies: { accessToken: ui_idam_client.user_token })
+        logger.debug("ET < Case worker search by multiple reference - #{resp.body}")
+        JSON.parse(resp.body)["results"]
+      rescue RestClient::Exception => e
+        logger.debug "ET < Case worker search by multiple reference (ERROR) - #{e.response.body}"
+        raise Exceptions::Base.raise_exception(e)
+      end
+    end
+
+    # Search for the latest case matching the multiple reference.  Useful for testing
+    # @param [String] reference The multiples reference number to search for
+    # @param [String] case_type_id The case type ID to set the search scope to
+    # @return [Hash] The case object returned from the server
+    def caseworker_search_latest_by_multiple_reference(reference, case_type_id:)
+      results = caseworker_search_by_multiple_reference(reference, case_type_id: case_type_id, page: 1, sort_direction: 'desc')
+      results.first
+    end
+
     private
 
     attr_accessor :ui_idam_client, :config, :remote_config, :logger
