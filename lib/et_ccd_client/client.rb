@@ -77,6 +77,29 @@ module EtCcdClient
       results.first
     end
 
+    # Search for cases by multiple reference - useful for testing
+    # @param [String] reference The multiples reference number to search for
+    # @param [String] case_type_id The case type ID to set the search scope to
+    # @param [Integer] page - The page number to fetch
+    # @param [String] sort_direction (defaults to 'desc') - Change to 'asc' to do oldest first
+    #
+    # @return [Array<Hash>] The json response from the server
+    def caseworker_search_by_multiple_reference(reference, case_type_id:, page: 1, sort_direction: 'desc')
+      tpl = Addressable::Template.new(config.cases_url)
+      url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.multipleReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
+      resp = RestClient.get(url, content_type: 'application/json', accept: 'application/json', 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}")
+      JSON.parse(resp.body)
+    end
+
+    # Search for the latest case matching the multiples reference.  Useful for testing
+    # @param [String] reference The multiples reference number to search for
+    # @param [String] case_type_id The case type ID to set the search scope to
+    # @return [Hash] The case object returned from the server
+    def caseworker_search_latest_by_multiple_reference(reference, case_type_id:)
+      results = caseworker_search_by_multiple_reference(reference, case_type_id: case_type_id, page: 1, sort_direction: 'desc')
+      results.first
+    end
+
     def caseworker_cases_pagination_metadata(case_type_id:, query: {})
       tpl = Addressable::Template.new(config.cases_pagination_metadata_url)
       url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: query).to_s
