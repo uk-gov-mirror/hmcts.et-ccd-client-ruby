@@ -40,6 +40,10 @@ module EtCcdClient
       'initiateCase'
     end
 
+    def initiate_bulk_event_id
+      'createBulkAction'
+    end
+
     def case_management_ui_config_url
       "#{case_management_ui_base_url}/config"
     end
