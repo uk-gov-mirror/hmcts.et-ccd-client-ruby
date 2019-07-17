@@ -16,6 +16,7 @@ RSpec.describe EtCcdClient::Client do
       logger: mock_logger,
       user_id: 51,
       initiate_claim_event_id: 'mockinitiateevent',
+      initiate_bulk_event_id: 'mockinitiatebulkevent',
       initiate_case_url: 'http://data.mock.com/caseworkers/{uid}/jurisdictions/{jid}/case-types/{ctid}/event-triggers/{etid}/token',
       create_case_url: 'http://data.mock.com/caseworkers/{uid}/jurisdictions/{jid}/case-types/{ctid}/cases',
       use_sidam: true,
@@ -185,6 +186,85 @@ RSpec.describe EtCcdClient::Client do
       aggregate_failures "Both exception should be raised and log should be recorded" do
         expect(action).to raise_exception(RestClient::NotFound)
         expect(mock_logger).to have_received(:debug).with("ET < Start case creation (ERROR) - #{resp_body}")
+      end
+    end
+  end
+  describe "#caseworker_start_bulk_creation" do
+    it "performs the correct http request" do
+      # Arrange - stub the url
+      stub = stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiatebulkevent/token").
+             to_return(body: '{}', headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      client.caseworker_start_bulk_creation(case_type_id: 'mycasetypeid')
+
+      # Assert
+      expect(stub).to have_been_requested
+    end
+
+    it "returns the correct hash from the json" do
+      # Arrange - stub the url
+      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiatebulkevent/token").
+        to_return(body: '{"test":"value"}', headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      result = client.caseworker_start_bulk_creation(case_type_id: 'mycasetypeid')
+
+      # Assert
+      expect(result).to eq("test" => "value")
+    end
+
+    it "uses a tagged logger" do
+      # Arrange - stub the url
+      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiatebulkevent/token").
+        to_return(body: '{"test":"value"}', headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      client.caseworker_start_bulk_creation(case_type_id: 'mycasetypeid')
+
+      # Assert
+      expect(mock_logger).to have_received(:tagged)
+    end
+
+    it "logs the request" do
+      # Arrange - stub the url
+      url = "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiatebulkevent/token"
+      stub_request(:get, url).
+        to_return(body: '{"test":"value"}', headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      client.caseworker_start_bulk_creation(case_type_id: 'mycasetypeid')
+
+      # Assert
+      expect(mock_logger).to have_received(:debug).with("ET > Start bulk creation (#{url})")
+    end
+
+    it "logs the response" do
+      # Arrange - stub the url
+      resp_body = '{"test":"value"}'
+      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiatebulkevent/token").
+        to_return(body: resp_body, headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      client.caseworker_start_bulk_creation(case_type_id: 'mycasetypeid')
+
+      # Assert
+      expect(mock_logger).to have_received(:debug).with("ET < Start bulk creation - #{resp_body}")
+    end
+
+    it "logs the response under error conditions" do
+      # Arrange - stub the url
+      resp_body = '{"message": "Not found"}'
+      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiatebulkevent/token").
+        to_return(body: resp_body, headers: default_response_headers, status: 404)
+
+      # Act - Call the method
+      action = -> { client.caseworker_start_bulk_creation(case_type_id: 'mycasetypeid') }
+
+      # Assert
+      aggregate_failures "Both exception should be raised and log should be recorded" do
+        expect(action).to raise_exception(RestClient::NotFound)
+        expect(mock_logger).to have_received(:debug).with("ET < Start bulk creation (ERROR) - #{resp_body}")
       end
     end
   end
