@@ -21,8 +21,15 @@ module EtCcdClient
       end
 
       def message
-        original_exception.message
+        json = JSON.parse(response.body) rescue JSON::JSONError
+        return super if json.nil?
+
+        message_from_server = json['message']
+        return original_exception.message if message_from_server.nil?
+
+        "#{original_exception.message} - #{message_from_server}"
       end
+
 
       def response
         original_exception.response
