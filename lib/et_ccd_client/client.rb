@@ -5,6 +5,7 @@ require 'et_ccd_client/config'
 require 'et_ccd_client/exceptions'
 require 'json'
 require 'forwardable'
+require 'connection_pool'
 module EtCcdClient
   # A client to interact with the CCD API (backend)
   class Client
@@ -14,6 +15,18 @@ module EtCcdClient
       self.idam_client = idam_client || (config.use_sidam ? IdamClient.new : TidamClient.new)
       self.config = config
       self.logger = config.logger
+    end
+
+    def self.use(&block)
+      connection_pool.with(&block)
+    end
+
+    def self.connection_pool(config: ::EtCcdClient.config)
+      @connection_pool ||= ConnectionPool.new(size: config.pool_size, timeout: config.pool_timeout) do
+        new.tap do |client|
+          client.login
+        end
+      end
     end
 
     delegate login: :idam_client

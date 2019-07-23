@@ -65,6 +65,8 @@ EtCcdClient.config do |c|
     c.sidam_password = value (Only needed if use_sidam is true)
     c.user_id = <value> (Only needed if use_sidam is false)
     c.user_role = <value> (Only needed if use_sidam is false)
+    c.pool_size = <value> The size of the connection pool (do not set lower than number of sidekiq threads)
+    c.pool_timeout = <value) The time in seconds where we give up waiting for someone to release a client to the pool
     c.logger = Rails.logger (or any instance of an active support logger if you dont have rails)
 end
 
