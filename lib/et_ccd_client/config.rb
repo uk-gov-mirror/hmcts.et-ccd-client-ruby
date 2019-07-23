@@ -11,6 +11,7 @@ module EtCcdClient
     attr_accessor :logger
     attr_accessor :verify_ssl, :use_sidam, :sidam_username, :sidam_password
     attr_accessor :case_management_ui_redirect_url
+    attr_accessor :pool_size, :pool_timeout
 
     def idam_service_token_exchange_url
       "#{auth_base_url}/lease"
@@ -71,9 +72,11 @@ module EtCcdClient
       self.microservice_secret = 'AAAAAAAAAAAAAAAC'
       self.logger = NullLogger.new
       self.verify_ssl = true
-      self.use_sidam = false
+      self.use_sidam = true
       self.sidam_username = 'm@m.com'
-      self.sidam_password = 'p'
+      self.sidam_password = 'Pa55word11'
+      self.pool_size = 5
+      self.pool_timeout = 30
     end
   end
 end

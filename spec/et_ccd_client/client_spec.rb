@@ -399,7 +399,7 @@ RSpec.describe EtCcdClient::Client do
 
     it "re raises the response with the response body available under error conditions with standard message" do
       # Arrange - stub the url
-      resp_body = "Unauthorized"
+      resp_body = '{"message": "Unauthorized"}'
       stub_request(:post, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
         to_return(body: resp_body, headers: default_response_headers, status: 401)
 
@@ -427,4 +427,78 @@ RSpec.describe EtCcdClient::Client do
   describe "#caseworker_cases_pagination_metadata" do
 
   end
+
+  describe ".use" do
+    before do
+      stub_request(:post, "http://localhost:4502/lease").to_return(body: '{}', status: 200)
+      stub_request(:post, "http://localhost:4501/loginUser").to_return(body: '{}', status: 200)
+      stub_request(:get, "http://localhost:4501/details").to_return(body: '{}', status: 200)
+    end
+    it 'fetches a connection from the pool' do
+      # Act
+      described_class.use do |client|
+        # Assert
+        expect(client).to be_an_instance_of(described_class)
+      end
+    end
+
+    it 'ensures it is logged in ready for use' do
+      # Setup - call use
+      described_class.use do |client|
+        # Act - Try and use an endpoint
+        action = -> { client.caseworker_search_by_reference('anything') }
+
+        # Assert - Make sure it doesnt raise an error
+        expect(action).not_to raise_exception(::EtCcdClient::Exceptions::Base)
+      end
+    end
+
+    it 'checks out from the pool' do
+      # Arrange
+      was_available = described_class.connection_pool.available
+      # Act
+      described_class.use do |_client|
+        # Assert
+        expect(described_class.connection_pool.available).to eql(was_available - 1)
+      end
+    end
+
+    it 'checks back into the pool' do
+      # Arrange
+      was_available = described_class.connection_pool.available
+
+      # Act
+      described_class.use { |_client| }
+
+      # Assert
+      expect(described_class.connection_pool.available).to eql(was_available)
+    end
+
+    it 'checks 2 clients out from the same pool if 2 threads are used' do
+      # Arrange
+      was_available = described_class.connection_pool.available
+
+      # Act
+      thread1 = Thread.new do
+        described_class.use do |client1|
+          Thread.stop
+        end
+      end
+
+      thread2 = Thread.new do
+        described_class.use do |client2|
+          Thread.stop
+        end
+      end
+
+      sleep 0.1 until thread1.status == 'sleep' && thread2.status == 'sleep'
+
+      expect(described_class.connection_pool.available).to eql(was_available - 2)
+      thread1.run
+      thread2.run
+      thread1.join
+      thread2.join
+    end
+  end
+
 end
