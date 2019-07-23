@@ -399,7 +399,7 @@ RSpec.describe EtCcdClient::Client do
 
     it "re raises the response with the response body available under error conditions with standard message" do
       # Arrange - stub the url
-      resp_body = "Unauthorized"
+      resp_body = '{"message": "Unauthorized"}'
       stub_request(:post, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
         to_return(body: resp_body, headers: default_response_headers, status: 401)
 

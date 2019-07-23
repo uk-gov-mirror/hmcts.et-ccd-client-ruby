@@ -209,7 +209,7 @@ RSpec.describe EtCcdClient::UiClient do
 
     it "re raises the response with the response body available under error conditions with standard message" do
       # Arrange - stub the url
-      resp_body = "Unauthorized"
+      resp_body = '{"message": "Unauthorized"}'
       stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
         with(query: { 'case.feeGroupReference' => reference, page: 1, 'sortDirection' => 'desc' }).
         to_return(body: resp_body, headers: default_response_headers, status: 401)
@@ -355,7 +355,7 @@ RSpec.describe EtCcdClient::UiClient do
 
     it "re raises the response with the response body available under error conditions with standard message" do
       # Arrange - stub the url
-      resp_body = "Unauthorized"
+      resp_body = '{"message": "Unauthorized"}'
       stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
         with(query: { 'case.ethosCaseReference' => reference, page: 1, 'sortDirection' => 'desc' }).
         to_return(body: resp_body, headers: default_response_headers, status: 401)
@@ -501,7 +501,7 @@ RSpec.describe EtCcdClient::UiClient do
 
     it "re raises the response with the response body available under error conditions with standard message" do
       # Arrange - stub the url
-      resp_body = "Unauthorized"
+      resp_body = '{"message": "Unauthorized"}'
       stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
         with(query: { 'case.multipleReference' => reference, page: 1, 'sortDirection' => 'desc' }).
         to_return(body: resp_body, headers: default_response_headers, status: 401)

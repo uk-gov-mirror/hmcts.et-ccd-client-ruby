@@ -22,7 +22,7 @@ module EtCcdClient
 
       def message
         json = JSON.parse(response.body) rescue JSON::JSONError
-        return super if json.nil?
+        return super if json.nil? || json == JSON::JSONError
 
         message_from_server = json['message']
         return original_exception.message if message_from_server.nil?
