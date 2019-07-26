@@ -1,5 +1,8 @@
 require 'spec_helper'
 require 'et_ccd_client'
+require 'rack'
+
+
 RSpec.describe EtCcdClient::Client do
   subject(:client) { described_class.new(idam_client: mock_idam_client, config: mock_config) }
 
@@ -10,6 +13,7 @@ RSpec.describe EtCcdClient::Client do
       auth_base_url: 'http://auth.mock.com',
       idam_base_url: 'http://idam.mock.com',
       data_store_base_url: 'http://data.mock.com',
+      document_store_base_url: 'http://documents.mock.com',
       jurisdiction_id: 'mockjid',
       microservice: 'mockmicroservice',
       microservice_secret: 'nottellingyouitsasecret',
@@ -19,6 +23,7 @@ RSpec.describe EtCcdClient::Client do
       initiate_bulk_event_id: 'mockinitiatebulkevent',
       initiate_case_url: 'http://data.mock.com/caseworkers/{uid}/jurisdictions/{jid}/case-types/{ctid}/event-triggers/{etid}/token',
       create_case_url: 'http://data.mock.com/caseworkers/{uid}/jurisdictions/{jid}/case-types/{ctid}/cases',
+      upload_file_url: 'http://documents.mock.com/documents',
       use_sidam: true,
       sidam_username: 'm@m.com',
       sidam_password: 'p',
@@ -184,7 +189,7 @@ RSpec.describe EtCcdClient::Client do
 
       # Assert
       aggregate_failures "Both exception should be raised and log should be recorded" do
-        expect(action).to raise_exception(RestClient::NotFound)
+        expect(action).to raise_exception(EtCcdClient::Exceptions::Base)
         expect(mock_logger).to have_received(:debug).with("ET < Start case creation (ERROR) - #{resp_body}")
       end
     end
@@ -263,7 +268,7 @@ RSpec.describe EtCcdClient::Client do
 
       # Assert
       aggregate_failures "Both exception should be raised and log should be recorded" do
-        expect(action).to raise_exception(RestClient::NotFound)
+        expect(action).to raise_exception(EtCcdClient::Exceptions::Base)
         expect(mock_logger).to have_received(:debug).with("ET < Start bulk creation (ERROR) - #{resp_body}")
       end
     end
@@ -428,11 +433,259 @@ RSpec.describe EtCcdClient::Client do
 
   end
 
+  describe "#upload_file_from_filename" do
+    def parse_multipart(request)
+      Rack::Multipart::Parser.parse StringIO.new(request.body), request.headers['Content-Length'].to_i, request.headers['Content-Type'], Rack::Multipart::Parser::TEMPFILE_FACTORY, Rack::Multipart::Parser::BUFSIZE, Rack::Utils.default_query_parser
+    end
+
+    it "performs the correct http request" do
+      # Arrange - stub the url
+      stub = stub_request(:post, "http://documents.mock.com/documents").
+        with(headers: { 'Serviceauthorization'=>'Bearer mockservicetoken', 'Authorization' => 'Bearer mockusertoken', 'Content-Type' => /\Amultipart\/form-data/}).
+        to_return(body: '{}', headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      client.upload_file_from_filename(File.absolute_path('../fixtures/et1.pdf', __dir__), content_type: 'application/pdf')
+
+      # Assert
+      expect(stub).to have_been_requested
+    end
+
+    it "has the correct params in the multipart body" do
+      # Arrange - stub the url
+      last_request = nil
+      stub_request(:post, "http://documents.mock.com/documents").
+        with(headers: { 'Serviceauthorization'=>'Bearer mockservicetoken', 'Authorization' => 'Bearer mockusertoken', 'Content-Type' => /\Amultipart\/form-data/}) {|request| last_request = request}.
+        to_return(body: '{}', headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      client.upload_file_from_filename(File.absolute_path('../fixtures/et1.pdf', __dir__), content_type: 'application/pdf')
+
+      # Assert
+      expect(parse_multipart(last_request).params).to include('files' => a_hash_including(filename: 'et1.pdf', name: "files", type: "application/pdf", tempfile: instance_of(Tempfile)), 'classification' => 'PUBLIC')
+    end
+
+    it "has the correct file in the multipart body" do
+      # Arrange - stub the url
+      last_request = nil
+      stub_request(:post, "http://documents.mock.com/documents").
+        with(headers: { 'Serviceauthorization'=>'Bearer mockservicetoken', 'Authorization' => 'Bearer mockusertoken', 'Content-Type' => /\Amultipart\/form-data/}) {|request| last_request = request}.
+        to_return(body: '{}', headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      input_file = File.absolute_path('../fixtures/et1.pdf', __dir__)
+      client.upload_file_from_filename(input_file, content_type: 'application/pdf')
+
+      # Assert
+      file = parse_multipart(last_request).params.dig('files', :tempfile)
+      expect(file.size).to eql File.size(input_file)
+    end
+
+    it "performs the correct hash from the json" do
+      # Arrange - stub the url
+      stub_request(:post, "http://documents.mock.com/documents").
+        with(headers: { 'Serviceauthorization'=>'Bearer mockservicetoken', 'Authorization' => 'Bearer mockusertoken', 'Content-Type' => /\Amultipart\/form-data/}).
+        to_return(body: '{"test":"value"}', headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      result = client.upload_file_from_filename(File.absolute_path('../fixtures/et1.pdf', __dir__), content_type: 'application/pdf')
+
+      # Assert
+      expect(result).to eql("test" => "value")
+    end
+
+    it "uses a tagged logger" do
+      # Arrange - stub the url
+      stub_request(:post, "http://documents.mock.com/documents").
+        to_return(body: '{"test":"value"}', headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      client.upload_file_from_filename(File.absolute_path('../fixtures/et1.pdf', __dir__), content_type: 'application/pdf')
+
+      # Assert
+      expect(mock_logger).to have_received(:tagged)
+    end
+
+    it "logs the request" do
+      # Arrange - stub the url
+      stub_request(:post, "http://documents.mock.com/documents").
+        to_return(body: '{"test":"value"}', headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      filename = File.absolute_path('../fixtures/et1.pdf', __dir__)
+      client.upload_file_from_filename(filename, content_type: 'application/pdf')
+
+      # Assert
+      expect(mock_logger).to have_received(:debug).with("ET > Upload file from filename (#{filename})")
+    end
+
+    it "logs the response" do
+      # Arrange - stub the url
+      resp_body = '{"test":"value"}'
+      stub_request(:post, "http://documents.mock.com/documents").
+        to_return(body: resp_body, headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      client.upload_file_from_filename(File.absolute_path('../fixtures/et1.pdf', __dir__), content_type: 'application/pdf')
+
+      # Assert
+      expect(mock_logger).to have_received(:debug).with("ET < Upload file from filename - #{resp_body}")
+    end
+
+    it "logs the response under error conditions" do
+      # Arrange - stub the url
+      resp_body = '{"message": "Not found"}'
+      stub_request(:post, "http://documents.mock.com/documents").
+        to_return(body: resp_body, headers: default_response_headers, status: 404)
+
+      # Act - Call the method
+      action = -> { client.upload_file_from_filename(File.absolute_path('../fixtures/et1.pdf', __dir__), content_type: 'application/pdf') }
+
+      # Assert
+      aggregate_failures "Both exception should be raised and log should be recorded" do
+        expect(action).to raise_exception(EtCcdClient::Exceptions::Base)
+        expect(mock_logger).to have_received(:debug).with("ET < Upload file from filename (ERROR) - #{resp_body}")
+      end
+    end
+
+
+  end
+
+  describe "#upload_file_from_url" do
+    def parse_multipart(request)
+      Rack::Multipart::Parser.parse StringIO.new(request.body), request.headers['Content-Length'].to_i, request.headers['Content-Type'], Rack::Multipart::Parser::TEMPFILE_FACTORY, Rack::Multipart::Parser::BUFSIZE, Rack::Utils.default_query_parser
+    end
+
+    before do
+      stub_request(:get, "http://external.server/et1.pdf").
+        with(
+          headers: {
+            'Accept'=>'*/*',
+            'Accept-Encoding'=>'gzip, deflate',
+            'Host'=>'external.server',
+            'User-Agent'=>'rest-client/2.0.2 (darwin18.6.0 x86_64) ruby/2.5.1p57'
+          }).
+        to_return(status: 200, body: File.new(File.absolute_path('../fixtures/et1.pdf', __dir__)), headers: {'Content-Type' => 'application/pdf'})
+    end
+
+    it "performs the correct http request" do
+      # Arrange - stub the url
+      stub = stub_request(:post, "http://documents.mock.com/documents").
+        with(headers: { 'Serviceauthorization'=>'Bearer mockservicetoken', 'Authorization' => 'Bearer mockusertoken', 'Content-Type' => /\Amultipart\/form-data/}).
+        to_return(body: '{}', headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      client.upload_file_from_url('http://external.server/et1.pdf', content_type: 'application/pdf')
+
+      # Assert
+      expect(stub).to have_been_requested
+    end
+
+    it "has the correct params in the multipart body" do
+      # Arrange - stub the url
+      last_request = nil
+      stub_request(:post, "http://documents.mock.com/documents").
+        with(headers: { 'Serviceauthorization'=>'Bearer mockservicetoken', 'Authorization' => 'Bearer mockusertoken', 'Content-Type' => /\Amultipart\/form-data/}) {|request| last_request = request}.
+        to_return(body: '{}', headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      client.upload_file_from_url('http://external.server/et1.pdf', content_type: 'application/pdf')
+
+      # Assert
+      expect(parse_multipart(last_request).params).to include('files' => a_hash_including(filename: instance_of(String), name: "files", type: "application/pdf", tempfile: instance_of(Tempfile)), 'classification' => 'PUBLIC')
+    end
+
+    it "has the correct file in the multipart body" do
+      # Arrange - stub the url
+      last_request = nil
+      stub_request(:post, "http://documents.mock.com/documents").
+        with(headers: { 'Serviceauthorization'=>'Bearer mockservicetoken', 'Authorization' => 'Bearer mockusertoken', 'Content-Type' => /\Amultipart\/form-data/}) {|request| last_request = request}.
+        to_return(body: '{}', headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      input_file = File.absolute_path('../fixtures/et1.pdf', __dir__)
+      client.upload_file_from_url('http://external.server/et1.pdf', content_type: 'application/pdf')
+
+      # Assert
+      file = parse_multipart(last_request).params.dig('files', :tempfile)
+      expect(file.size).to eql File.size(input_file)
+    end
+
+    it "performs the correct hash from the json" do
+      # Arrange - stub the url
+      stub_request(:post, "http://documents.mock.com/documents").
+        with(headers: { 'Serviceauthorization'=>'Bearer mockservicetoken', 'Authorization' => 'Bearer mockusertoken', 'Content-Type' => /\Amultipart\/form-data/}).
+        to_return(body: '{"test":"value"}', headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      result = client.upload_file_from_url('http://external.server/et1.pdf', content_type: 'application/pdf')
+
+      # Assert
+      expect(result).to eql("test" => "value")
+    end
+
+    it "uses a tagged logger" do
+      # Arrange - stub the url
+      stub_request(:post, "http://documents.mock.com/documents").
+        to_return(body: '{"test":"value"}', headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      client.upload_file_from_url('http://external.server/et1.pdf', content_type: 'application/pdf')
+
+      # Assert
+      expect(mock_logger).to have_received(:tagged)
+    end
+
+    it "logs the request" do
+      # Arrange - stub the url
+      stub_request(:post, "http://documents.mock.com/documents").
+        to_return(body: '{"test":"value"}', headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      input_url = 'http://external.server/et1.pdf'
+      client.upload_file_from_url(input_url, content_type: 'application/pdf')
+
+      # Assert
+      expect(mock_logger).to have_received(:debug).with("ET > Upload file from url (#{input_url})")
+    end
+
+    it "logs the response" do
+      # Arrange - stub the url
+      resp_body = '{"test":"value"}'
+      stub_request(:post, "http://documents.mock.com/documents").
+        to_return(body: resp_body, headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      client.upload_file_from_url('http://external.server/et1.pdf', content_type: 'application/pdf')
+
+      # Assert
+      expect(mock_logger).to have_received(:debug).with("ET < Upload file from url - #{resp_body}")
+    end
+
+    it "logs the response under error conditions" do
+      # Arrange - stub the url
+      resp_body = '{"message": "Not found"}'
+      stub_request(:post, "http://documents.mock.com/documents").
+        to_return(body: resp_body, headers: default_response_headers, status: 404)
+
+      # Act - Call the method
+      action = -> { client.upload_file_from_url('http://external.server/et1.pdf', content_type: 'application/pdf') }
+
+      # Assert
+      aggregate_failures "Both exception should be raised and log should be recorded" do
+        expect(action).to raise_exception(EtCcdClient::Exceptions::Base)
+        expect(mock_logger).to have_received(:debug).with("ET < Upload file from url (ERROR) - #{resp_body}")
+      end
+    end
+
+
+  end
+
   describe ".use" do
     before do
-      stub_request(:post, "http://localhost:4502/lease").to_return(body: '{}', status: 200)
-      stub_request(:post, "http://localhost:4501/loginUser").to_return(body: '{}', status: 200)
-      stub_request(:get, "http://localhost:4501/details").to_return(body: '{}', status: 200)
+      stub_request(:post, "http://localhost:4502/lease").to_return(body: 'servicetoken', status: 200)
+      stub_request(:post, "http://localhost:4501/loginUser").to_return(body: '{"access_token":"usertoken"}', status: 200)
+      stub_request(:get, "http://localhost:4501/details").to_return(body: '{"id":"userid","roles":["role1","role2"]}', status: 200)
     end
     it 'fetches a connection from the pool' do
       # Act
@@ -444,12 +697,21 @@ RSpec.describe EtCcdClient::Client do
 
     it 'ensures it is logged in ready for use' do
       # Setup - call use
+      stub_request(:get, "http://localhost:4452/caseworkers/userid/jurisdictions/EMPLOYMENT/case-types/anything/event-triggers/initiateCase/token").
+        with(
+          headers: {
+            'Authorization'=>'Bearer usertoken',
+            'Serviceauthorization'=>'Bearer servicetoken',
+            'User-Id'=>'userid',
+            'User-Roles'=>'role1,role2'
+          }).
+        to_return(status: 200, body: "{}", headers: {})
+
       described_class.use do |client|
         # Act - Try and use an endpoint
-        action = -> { client.caseworker_search_by_reference('anything') }
+        client.caseworker_start_case_creation(case_type_id: 'anything')
 
-        # Assert - Make sure it doesnt raise an error
-        expect(action).not_to raise_exception(::EtCcdClient::Exceptions::Base)
+
       end
     end
 
