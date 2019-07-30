@@ -11,6 +11,7 @@ RSpec.describe EtCcdClient::UiClient do
       auth_base_url: 'http://auth.mock.com',
       idam_base_url: 'http://idam.mock.com',
       data_store_base_url: 'http://data.mock.com',
+      document_store_url_rewrite: false,
       jurisdiction_id: 'mockjid',
       microservice: 'mockmicroservice',
       microservice_secret: 'nottellingyouitsasecret',

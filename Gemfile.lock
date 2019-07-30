@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    et_ccd_client (0.1.23)
+    et_ccd_client (0.1.24)
       addressable (~> 2.6)
       connection_pool (~> 2.2, >= 2.2.2)
       mechanize (~> 2.7, >= 2.7.6)
@@ -39,7 +39,7 @@ GEM
     mime-types-data (3.2019.0331)
     mini_portile2 (2.4.0)
     net-http-digest_auth (1.4.1)
-    net-http-persistent (3.0.1)
+    net-http-persistent (3.1.0)
       connection_pool (~> 2.2)
     netrc (0.11.0)
     nokogiri (1.10.3)

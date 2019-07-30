@@ -14,6 +14,7 @@ RSpec.describe EtCcdClient::Client do
       idam_base_url: 'http://idam.mock.com',
       data_store_base_url: 'http://data.mock.com',
       document_store_base_url: 'http://documents.mock.com',
+      document_store_url_rewrite: false,
       jurisdiction_id: 'mockjid',
       microservice: 'mockmicroservice',
       microservice_secret: 'nottellingyouitsasecret',
@@ -193,6 +194,19 @@ RSpec.describe EtCcdClient::Client do
         expect(mock_logger).to have_received(:debug).with("ET < Start case creation (ERROR) - #{resp_body}")
       end
     end
+
+    it "raises an error with the url present if the server responds with an error" do
+      # Arrange - stub the url
+      resp_body = '{"message": "Not found"}'
+      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiateevent/token").
+        to_return(body: resp_body, headers: default_response_headers, status: 404)
+
+      # Act - Call the method
+      action = -> { client.caseworker_start_case_creation(case_type_id: 'mycasetypeid') }
+
+      # Assert
+      expect(action).to raise_exception(EtCcdClient::Exceptions::Base, "404 Not Found - Not found ('http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiateevent/token')")
+    end
   end
   describe "#caseworker_start_bulk_creation" do
     it "performs the correct http request" do
@@ -271,6 +285,19 @@ RSpec.describe EtCcdClient::Client do
         expect(action).to raise_exception(EtCcdClient::Exceptions::Base)
         expect(mock_logger).to have_received(:debug).with("ET < Start bulk creation (ERROR) - #{resp_body}")
       end
+    end
+
+    it "raises an error with the url present if the server responds with an error" do
+      # Arrange - stub the url
+      resp_body = '{"message": "Not found"}'
+      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiatebulkevent/token").
+        to_return(body: resp_body, headers: default_response_headers, status: 404)
+
+      # Act - Call the method
+      action = -> { client.caseworker_start_bulk_creation(case_type_id: 'mycasetypeid') }
+
+      # Assert
+      expect(action).to raise_exception(EtCcdClient::Exceptions::Base, "404 Not Found - Not found ('http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiatebulkevent/token')")
     end
   end
 
@@ -419,6 +446,19 @@ RSpec.describe EtCcdClient::Client do
         expect(mock_logger).to have_received(:debug).with("ET < Case worker create case (ERROR) - #{resp_body}")
       end
     end
+
+    it "raises an error with the url present if the server responds with an error" do
+      # Arrange - stub the url
+      resp_body = '{"message": "Not Found"}'
+      stub_request(:post, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
+        to_return(body: resp_body, headers: default_response_headers, status: 404)
+
+      # Act - Call the method
+      case_create = -> { client.caseworker_case_create({}, case_type_id: 'mycasetypeid') }
+
+      # Assert
+      expect(case_create).to raise_error(EtCcdClient::Exceptions::Base, "404 Not Found - Not Found ('http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases')")
+    end
   end
 
   describe "#caseworker_search_by_reference" do
@@ -436,6 +476,55 @@ RSpec.describe EtCcdClient::Client do
   describe "#upload_file_from_filename" do
     def parse_multipart(request)
       Rack::Multipart::Parser.parse StringIO.new(request.body), request.headers['Content-Length'].to_i, request.headers['Content-Type'], Rack::Multipart::Parser::TEMPFILE_FACTORY, Rack::Multipart::Parser::BUFSIZE, Rack::Utils.default_query_parser
+    end
+
+    let(:example_response) do
+      example_response = {
+        "_embedded" => {
+          "documents" => [
+            {
+              "_links" => {
+                "self" => {
+                  "href" => "http://localhost:4506/1234-5678-1234-5678"
+                },
+                "binary" => {
+                  "href" => "http://localhost:4506/1234-5678-1234-5678/binary"
+                },
+                "thumbnail" => {
+                  "href" => "http://localhost:4506/1234-5678-1234-5678/thumbnail"
+                }
+              },
+              "_embedded" => {
+                "allDocumentVersions" => {
+                  "_embedded" => {
+                    "documentVersions" => [
+                      {
+                        "_links" => {
+                          "document" => {
+                            "href" => "http://localhost:4506/1234-5678-1234-5678"
+                          },
+                          "self" => {
+                            "href" => "http://localhost:4506/1234-5678-1234-5678/versions/ac711770-6681-4fd8-b662-f7f54ea7a27d"
+                          },
+                          "binary" => {
+                            "href" => "http://localhost:4506/1234-5678-1234-5678/versions/ac711770-6681-4fd8-b662-f7f54ea7a27d/binary"
+                          },
+                          "thumbnail" => {
+                            "href" => "http://localhost:4506/1234-5678-1234-5678/versions/ac711770-6681-4fd8-b662-f7f54ea7a27d/thumbnail"
+                          },
+                          "migrate" => {
+                            "href" => "http://localhost:4506/1234-5678-1234-5678/versions/ac711770-6681-4fd8-b662-f7f54ea7a27d/migrate"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
     end
 
     it "performs the correct http request" do
@@ -481,18 +570,61 @@ RSpec.describe EtCcdClient::Client do
       expect(file.size).to eql File.size(input_file)
     end
 
-    it "performs the correct hash from the json" do
+    it "returns the correct hash from the json without any urls modified" do
       # Arrange - stub the url
       stub_request(:post, "http://documents.mock.com/documents").
         with(headers: { 'Serviceauthorization'=>'Bearer mockservicetoken', 'Authorization' => 'Bearer mockusertoken', 'Content-Type' => /\Amultipart\/form-data/}).
-        to_return(body: '{"test":"value"}', headers: default_response_headers, status: 200)
+        to_return(body: JSON.generate(example_response), headers: default_response_headers, status: 200)
 
       # Act - Call the method
       result = client.upload_file_from_filename(File.absolute_path('../fixtures/et1.pdf', __dir__), content_type: 'application/pdf')
 
       # Assert
-      expect(result).to eql("test" => "value")
+      expect(result).to eql(example_response)
     end
+
+    it "returns the correct hash from the json with the first set of urls re written when configured to do so" do
+
+      # Arrange - change the config and stub the url
+      mock_config_values['document_store_url_rewrite'] = 'localhost:4506:dm-store:8080'.split(':')
+      stub_request(:post, "http://documents.mock.com/documents").
+        with(headers: { 'Serviceauthorization'=>'Bearer mockservicetoken', 'Authorization' => 'Bearer mockusertoken', 'Content-Type' => /\Amultipart\/form-data/}).
+        to_return(body: JSON.generate(example_response), headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      result = client.upload_file_from_filename(File.absolute_path('../fixtures/et1.pdf', __dir__), content_type: 'application/pdf')
+
+      # Assert
+      json_paths = ['self', 'binary', 'thumbnail']
+      aggregate_failures "Validating all hrefs" do
+        json_paths.each do |json_path|
+          full_path = "_links.#{json_path}.href"
+          expect(result.dig('_embedded', 'documents').first.dig(*full_path.split('.'))).to start_with('http://dm-store:8080')
+        end
+      end
+    end
+
+    it "returns the correct hash from the json with the second set of urls re written when configured to do so" do
+
+      # Arrange - change the config and stub the url
+      mock_config_values['document_store_url_rewrite'] = 'localhost:4506:dm-store:8080'.split(':')
+      stub_request(:post, "http://documents.mock.com/documents").
+        with(headers: { 'Serviceauthorization'=>'Bearer mockservicetoken', 'Authorization' => 'Bearer mockusertoken', 'Content-Type' => /\Amultipart\/form-data/}).
+        to_return(body: JSON.generate(example_response), headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      result = client.upload_file_from_filename(File.absolute_path('../fixtures/et1.pdf', __dir__), content_type: 'application/pdf')
+
+      # Assert
+      json_paths = ['document', 'self', 'binary', 'thumbnail', 'migrate']
+      aggregate_failures "Validating all hrefs" do
+        json_paths.each do |json_path|
+          full_path = "_links.#{json_path}.href"
+          expect(result.dig('_embedded', 'documents').first.dig('_embedded', 'allDocumentVersions', '_embedded', 'documentVersions').first.dig(*full_path.split('.'))).to start_with('http://dm-store:8080')
+        end
+      end
+    end
+
 
     it "uses a tagged logger" do
       # Arrange - stub the url
@@ -548,23 +680,78 @@ RSpec.describe EtCcdClient::Client do
       end
     end
 
+    it "raises an error with the url present if the server responds with an error" do
+      # Arrange - stub the url
+      resp_body = '{"message": "Not found"}'
+      stub_request(:post, "http://documents.mock.com/documents").
+        to_return(body: resp_body, headers: default_response_headers, status: 404)
+
+      # Act - Call the method
+      action = -> { client.upload_file_from_filename(File.absolute_path('../fixtures/et1.pdf', __dir__), content_type: 'application/pdf') }
+
+      # Assert
+      expect(action).to raise_exception(EtCcdClient::Exceptions::Base, "404 Not Found - Not found ('http://documents.mock.com/documents')")
+    end
+
 
   end
 
   describe "#upload_file_from_url" do
+    let(:example_response) do
+      example_response = {
+        "_embedded" => {
+          "documents" => [
+            {
+              "_links" => {
+                "self" => {
+                  "href" => "http://localhost:4506/1234-5678-1234-5678"
+                },
+                "binary" => {
+                  "href" => "http://localhost:4506/1234-5678-1234-5678/binary"
+                },
+                "thumbnail" => {
+                  "href" => "http://localhost:4506/1234-5678-1234-5678/thumbnail"
+                }
+              },
+              "_embedded" => {
+                "allDocumentVersions" => {
+                  "_embedded" => {
+                    "documentVersions" => [
+                      {
+                        "_links" => {
+                          "document" => {
+                            "href" => "http://localhost:4506/1234-5678-1234-5678"
+                          },
+                          "self" => {
+                            "href" => "http://localhost:4506/1234-5678-1234-5678/versions/ac711770-6681-4fd8-b662-f7f54ea7a27d"
+                          },
+                          "binary" => {
+                            "href" => "http://localhost:4506/1234-5678-1234-5678/versions/ac711770-6681-4fd8-b662-f7f54ea7a27d/binary"
+                          },
+                          "thumbnail" => {
+                            "href" => "http://localhost:4506/1234-5678-1234-5678/versions/ac711770-6681-4fd8-b662-f7f54ea7a27d/thumbnail"
+                          },
+                          "migrate" => {
+                            "href" => "http://localhost:4506/1234-5678-1234-5678/versions/ac711770-6681-4fd8-b662-f7f54ea7a27d/migrate"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    end
+
     def parse_multipart(request)
       Rack::Multipart::Parser.parse StringIO.new(request.body), request.headers['Content-Length'].to_i, request.headers['Content-Type'], Rack::Multipart::Parser::TEMPFILE_FACTORY, Rack::Multipart::Parser::BUFSIZE, Rack::Utils.default_query_parser
     end
 
     before do
       stub_request(:get, "http://external.server/et1.pdf").
-        with(
-          headers: {
-            'Accept'=>'*/*',
-            'Accept-Encoding'=>'gzip, deflate',
-            'Host'=>'external.server',
-            'User-Agent'=>'rest-client/2.0.2 (darwin18.6.0 x86_64) ruby/2.5.1p57'
-          }).
         to_return(status: 200, body: File.new(File.absolute_path('../fixtures/et1.pdf', __dir__)), headers: {'Content-Type' => 'application/pdf'})
     end
 
@@ -592,7 +779,7 @@ RSpec.describe EtCcdClient::Client do
       client.upload_file_from_url('http://external.server/et1.pdf', content_type: 'application/pdf')
 
       # Assert
-      expect(parse_multipart(last_request).params).to include('files' => a_hash_including(filename: instance_of(String), name: "files", type: "application/pdf", tempfile: instance_of(Tempfile)), 'classification' => 'PUBLIC')
+      expect(parse_multipart(last_request).params).to include('files' => a_hash_including(filename: 'et1.pdf', name: "files", type: "application/pdf", tempfile: instance_of(Tempfile)), 'classification' => 'PUBLIC')
     end
 
     it "has the correct file in the multipart body" do
@@ -611,17 +798,59 @@ RSpec.describe EtCcdClient::Client do
       expect(file.size).to eql File.size(input_file)
     end
 
-    it "performs the correct hash from the json" do
+    it "returns the correct hash from the json without any urls modified" do
       # Arrange - stub the url
       stub_request(:post, "http://documents.mock.com/documents").
         with(headers: { 'Serviceauthorization'=>'Bearer mockservicetoken', 'Authorization' => 'Bearer mockusertoken', 'Content-Type' => /\Amultipart\/form-data/}).
-        to_return(body: '{"test":"value"}', headers: default_response_headers, status: 200)
+        to_return(body: JSON.generate(example_response), headers: default_response_headers, status: 200)
 
       # Act - Call the method
       result = client.upload_file_from_url('http://external.server/et1.pdf', content_type: 'application/pdf')
 
       # Assert
-      expect(result).to eql("test" => "value")
+      expect(result).to eql(example_response)
+    end
+
+    it "returns the correct hash from the json with the first set of urls re written when configured to do so" do
+
+      # Arrange - change the config and stub the url
+      mock_config_values['document_store_url_rewrite'] = 'localhost:4506:dm-store:8080'.split(':')
+      stub_request(:post, "http://documents.mock.com/documents").
+        with(headers: { 'Serviceauthorization'=>'Bearer mockservicetoken', 'Authorization' => 'Bearer mockusertoken', 'Content-Type' => /\Amultipart\/form-data/}).
+        to_return(body: JSON.generate(example_response), headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      result = client.upload_file_from_url('http://external.server/et1.pdf', content_type: 'application/pdf')
+
+      # Assert
+      json_paths = ['self', 'binary', 'thumbnail']
+      aggregate_failures "Validating all hrefs" do
+        json_paths.each do |json_path|
+          full_path = "_links.#{json_path}.href"
+          expect(result.dig('_embedded', 'documents').first.dig(*full_path.split('.'))).to start_with('http://dm-store:8080')
+        end
+      end
+    end
+
+    it "returns the correct hash from the json with the second set of urls re written when configured to do so" do
+
+      # Arrange - change the config and stub the url
+      mock_config_values['document_store_url_rewrite'] = 'localhost:4506:dm-store:8080'.split(':')
+      stub_request(:post, "http://documents.mock.com/documents").
+        with(headers: { 'Serviceauthorization'=>'Bearer mockservicetoken', 'Authorization' => 'Bearer mockusertoken', 'Content-Type' => /\Amultipart\/form-data/}).
+        to_return(body: JSON.generate(example_response), headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      result = client.upload_file_from_url('http://external.server/et1.pdf', content_type: 'application/pdf')
+
+      # Assert
+      json_paths = ['document', 'self', 'binary', 'thumbnail', 'migrate']
+      aggregate_failures "Validating all hrefs" do
+        json_paths.each do |json_path|
+          full_path = "_links.#{json_path}.href"
+          expect(result.dig('_embedded', 'documents').first.dig('_embedded', 'allDocumentVersions', '_embedded', 'documentVersions').first.dig(*full_path.split('.'))).to start_with('http://dm-store:8080')
+        end
+      end
     end
 
     it "uses a tagged logger" do
@@ -676,6 +905,19 @@ RSpec.describe EtCcdClient::Client do
         expect(action).to raise_exception(EtCcdClient::Exceptions::Base)
         expect(mock_logger).to have_received(:debug).with("ET < Upload file from url (ERROR) - #{resp_body}")
       end
+    end
+
+    it "raises an error with the url present if the server responds with an error" do
+      # Arrange - stub the url
+      resp_body = '{"message": "Not found"}'
+      stub_request(:post, "http://documents.mock.com/documents").
+        to_return(body: resp_body, headers: default_response_headers, status: 404)
+
+      # Act - Call the method
+      action = -> { client.upload_file_from_url('http://external.server/et1.pdf', content_type: 'application/pdf') }
+
+      # Assert
+      expect(action).to raise_exception(EtCcdClient::Exceptions::Base, "404 Not Found - Not found ('http://documents.mock.com/documents')")
     end
 
 

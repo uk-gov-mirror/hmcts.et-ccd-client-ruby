@@ -33,8 +33,12 @@ module EtCcdClient
         url = "#{remote_config.api_url}#{path}"
         logger.debug("ET > Caseworker search by reference (#{url})")
         resp = RestClient::Request.execute(method: :get, url: url, headers: { content_type: 'application/json', accept: 'application/json' }, cookies: { accessToken: ui_idam_client.user_token })
-        logger.debug("ET < Case worker search by reference - #{resp.body}")
-        JSON.parse(resp.body)["results"]
+        resp_body = resp.body
+        logger.debug("ET < Case worker search by reference - #{resp_body}")
+        unless config.document_store_url_rewrite == false
+          resp_body = reverse_rewrite_document_store_urls(resp_body)
+        end
+        JSON.parse(resp_body)["results"]
       rescue RestClient::Exception => e
         logger.debug "ET < Case worker search by reference (ERROR) - #{e.response.body}"
         raise Exceptions::Base.raise_exception(e)
@@ -64,8 +68,12 @@ module EtCcdClient
         url = "#{remote_config.api_url}#{path}"
         logger.debug("ET > Caseworker search by ethos case reference (#{url})")
         resp = RestClient::Request.execute(method: :get, url: url, headers: { content_type: 'application/json', accept: 'application/json' }, cookies: { accessToken: ui_idam_client.user_token })
-        logger.debug("ET < Case worker search by ethos case reference - #{resp.body}")
-        JSON.parse(resp.body)["results"]
+        resp_body = resp.body
+        logger.debug("ET < Case worker search by ethos case reference - #{resp_body}")
+        unless config.document_store_url_rewrite == false
+          resp_body = reverse_rewrite_document_store_urls(resp_body)
+        end
+        JSON.parse(resp_body)["results"]
       rescue RestClient::Exception => e
         logger.debug "ET < Case worker search by ethos case reference (ERROR) - #{e.response.body}"
         raise Exceptions::Base.raise_exception(e)
@@ -115,5 +123,11 @@ module EtCcdClient
     private
 
     attr_accessor :ui_idam_client, :config, :remote_config, :logger
+
+    def reverse_rewrite_document_store_urls(body)
+      source_host, source_port, dest_host, dest_port = config.document_store_url_rewrite
+      body.gsub(/(https?):\/\/#{dest_host}:#{dest_port}/, "\\1://#{source_host}:#{source_port}")
+    end
+
   end
 end

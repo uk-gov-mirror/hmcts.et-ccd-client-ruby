@@ -1,7 +1,7 @@
 module EtCcdClient
   module Exceptions
     class UnprocessableEntity < Base
-      def message
+      def to_s
         json = JSON.parse(response.body) rescue JSON::JSONError
         return super if json.nil?
 

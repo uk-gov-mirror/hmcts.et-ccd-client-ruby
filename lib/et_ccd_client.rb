@@ -7,6 +7,7 @@ require 'et_ccd_client/client'
 require 'et_ccd_client/ui_remote_config'
 require 'et_ccd_client/ui_client'
 require 'et_ccd_client/exceptions'
+require 'et_ccd_client/uploaded_file'
 
 module EtCcdClient
   class Error < StandardError; end

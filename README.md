@@ -55,6 +55,8 @@ EtCcdClient.config do |c|
     c.auth_base_url = <value>
     c.idam_base_url = <value>
     c.data_store_base_url = <value>
+    c.document_store_base_url = <value>
+    c.document_store_url_rewrite = <false OR 4 element array containing source_host, source_port, dest_host, dest_port for rewriting - used in docker environment only>
     c.jurisdiction_id = <value>
     c.microservice = <value>
     c.microservice_secret = <value>
