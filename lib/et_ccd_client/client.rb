@@ -44,7 +44,7 @@ module EtCcdClient
         JSON.parse(resp.body)
       rescue RestClient::Exception => e
         logger.debug "ET < Start case creation (ERROR) - #{e.response.body}"
-        raise
+        Exceptions::Base.raise_exception(e, url: url)
       end
     end
 
@@ -61,7 +61,7 @@ module EtCcdClient
         JSON.parse(resp.body)
       rescue RestClient::Exception => e
         logger.debug "ET < Start bulk creation (ERROR) - #{e.response.body}"
-        raise
+        Exceptions::Base.raise_exception(e, url: url)
       end
     end
 
@@ -80,7 +80,7 @@ module EtCcdClient
         JSON.parse(resp_body)
       rescue RestClient::Exception => e
         logger.debug "ET < Case worker create case (ERROR) - #{e.response.body}"
-        raise Exceptions::Base.raise_exception(e)
+        Exceptions::Base.raise_exception(e, url: url)
       end
     end
 
@@ -137,11 +137,52 @@ module EtCcdClient
       JSON.parse(meta_resp)
     end
 
+    # @param [String] filename The full path to the file to upload
+    # @return [Hash] The object returned by the server
+    def upload_file_from_filename(filename, content_type:)
+      upload_file_from_source(filename, content_type: content_type, source_name: :filename, source: filename)
+    end
+
+    # @param [String] url The url of the file to upload
+    # @return [Hash] The object returned by the server
+    def upload_file_from_url(url, content_type:, original_filename: File.basename(url))
+      resp = RestClient::Request.execute(method: :get, url: url, raw_response: true, verify_ssl: config.verify_ssl)
+      upload_file_from_source(resp.file.path, content_type: content_type, source_name: :url, source: url, original_filename: original_filename)
+    end
+
     private
+
+    def upload_file_from_source(filename, content_type:, source_name:, source:, original_filename: filename)
+      logger.tagged('EtCcdClient::Client') do
+        url = config.upload_file_url
+        logger.debug("ET > Upload file from #{source_name} (#{source})")
+        uploaded_file = UploadedFile.new(filename, content_type: content_type, binary: true, original_filename: original_filename)
+        data = {
+          multipart: true,
+          files: uploaded_file,
+          classification: 'PUBLIC'
+        }
+        resp = RestClient::Request.execute(method: :post, url: url, payload: data, headers: { 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}" }, verify_ssl: config.verify_ssl)
+        resp_body = resp.body
+        logger.debug "ET < Upload file from #{source_name} - #{resp_body}"
+        unless config.document_store_url_rewrite == false
+          resp_body = rewrite_document_store_urls(resp_body)
+        end
+        JSON.parse(resp_body)
+      rescue RestClient::Exception => e
+        logger.debug "ET < Upload file from #{source_name} (ERROR) - #{e.response.body}"
+        Exceptions::Base.raise_exception(e, url: url)
+      end
+    end
 
     def initiate_case_url(case_type_id, event_id)
       tpl = Addressable::Template.new(config.initiate_case_url)
       tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, etid: event_id).to_s
+    end
+
+    def rewrite_document_store_urls(body)
+      source_host, source_port, dest_host, dest_port = config.document_store_url_rewrite
+      body.gsub(/(https?):\/\/#{source_host}:#{source_port}/, "\\1://#{dest_host}:#{dest_port}")
     end
 
     attr_accessor :idam_client, :config, :logger

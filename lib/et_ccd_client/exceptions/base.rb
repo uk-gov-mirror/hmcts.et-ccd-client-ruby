@@ -1,43 +1,47 @@
 module EtCcdClient
   module Exceptions
     class Base < ::StandardError
-      attr_reader :original_exception, :response, :message
+      attr_reader :original_exception, :response, :url
 
-      def self.raise_exception(original_exception)
+      def self.raise_exception(original_exception, **kw_args)
         expected_error_class = original_exception.class.name.split('::').last
         if EtCcdClient::Exceptions.const_defined?(expected_error_class)
-          raise EtCcdClient::Exceptions.const_get(expected_error_class), original_exception
+          raise EtCcdClient::Exceptions.const_get(expected_error_class).new original_exception, **kw_args
         else
-          raise self, original_exception
+          raise new(original_exception, **kw_args)
         end
       end
 
-      def self.exception(*args)
-        new(*args)
+      def self.exception(*args, **kw_args)
+        new(*args, **kw_args)
       end
 
-      def initialize(original_exception)
+      def initialize(original_exception, url: nil)
         self.original_exception = original_exception
+        self.url = url
       end
-
-      def message
-        json = JSON.parse(response.body) rescue JSON::JSONError
-        return super if json.nil? || json == JSON::JSONError
-
-        message_from_server = json['message']
-        return original_exception.message if message_from_server.nil?
-
-        "#{original_exception.message} - #{message_from_server}"
-      end
-
 
       def response
         original_exception.response
       end
 
+      def to_s
+        json = JSON.parse(response.body) rescue JSON::JSONError
+        message = if json.nil? || json == JSON::JSONError
+          ''
+        else
+          json['message'] || ''
+        end
+        if url
+          "#{original_exception.message} - #{message} ('#{url}')"
+        else
+          "#{original_exception.message} - #{message}"
+        end
+      end
+
       private
 
-      attr_writer :original_exception
+      attr_writer :original_exception, :url
     end
   end
 end
