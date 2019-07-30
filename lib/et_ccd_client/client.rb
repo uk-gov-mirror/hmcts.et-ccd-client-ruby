@@ -159,7 +159,7 @@ module EtCcdClient
         logger.debug("ET < Download from remote source (#{url}) complete.  Data not shown as very likely to be binary")
         resp
       rescue RestClient::Exception => e
-        logger.debug "ET < Download from remote source (ERROR) - #{e.response.body}"
+        logger.debug "ET < Download from remote source (ERROR) - #{e.response}"
         Exceptions::Base.raise_exception(e, url: url)
       end
     end
