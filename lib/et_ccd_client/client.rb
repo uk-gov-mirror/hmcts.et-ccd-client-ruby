@@ -146,11 +146,23 @@ module EtCcdClient
     # @param [String] url The url of the file to upload
     # @return [Hash] The object returned by the server
     def upload_file_from_url(url, content_type:, original_filename: File.basename(url))
-      resp = RestClient::Request.execute(method: :get, url: url, raw_response: true, verify_ssl: config.verify_ssl)
+      resp = download_from_remote_source(url)
       upload_file_from_source(resp.file.path, content_type: content_type, source_name: :url, source: url, original_filename: original_filename)
     end
 
     private
+
+    def download_from_remote_source(url)
+      logger.tagged('EtCcdClient::Client') do
+        logger.debug("ET > Download from remote source (#{url})")
+        resp = RestClient::Request.execute(method: :get, url: url, raw_response: true, verify_ssl: config.verify_ssl)
+        logger.debug("ET < Download from remote source (#{url}) complete.  Data not shown as very likely to be binary")
+        resp
+      rescue RestClient::Exception => e
+        logger.debug "ET < Download from remote source (ERROR) - #{e.response.body}"
+        Exceptions::Base.raise_exception(e, url: url)
+      end
+    end
 
     def upload_file_from_source(filename, content_type:, source_name:, source:, original_filename: filename)
       logger.tagged('EtCcdClient::Client') do

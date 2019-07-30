@@ -862,7 +862,7 @@ RSpec.describe EtCcdClient::Client do
       client.upload_file_from_url('http://external.server/et1.pdf', content_type: 'application/pdf')
 
       # Assert
-      expect(mock_logger).to have_received(:tagged)
+      expect(mock_logger).to have_received(:tagged).at_least(:once)
     end
 
     it "logs the request" do
