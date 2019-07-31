@@ -10,7 +10,7 @@ module EtCcdClient
       raise "#{path} file does not exist" unless ::File.exist?(path)
       @content_type = content_type
       @original_filename = original_filename
-      @tempfile = Tempfile.new([File.basename(@original_filename, ::File.extname(path)), ::File.extname(path)], encoding: Encoding::BINARY)
+      @tempfile = Tempfile.new(encoding: Encoding::BINARY)
       @tempfile.binmode if binary
       FileUtils.copy_file(path, @tempfile.path)
     end
