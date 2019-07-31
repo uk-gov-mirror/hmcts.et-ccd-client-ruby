@@ -12,6 +12,7 @@ module EtCcdClient
     attr_accessor :verify_ssl, :use_sidam, :sidam_username, :sidam_password
     attr_accessor :case_management_ui_redirect_url
     attr_accessor :pool_size, :pool_timeout
+    attr_accessor :proxy
 
     def idam_service_token_exchange_url
       "#{auth_base_url}/lease"
@@ -83,6 +84,7 @@ module EtCcdClient
       self.sidam_password = 'Pa55word11'
       self.pool_size = 5
       self.pool_timeout = 30
+      self.proxy = false
     end
   end
 end

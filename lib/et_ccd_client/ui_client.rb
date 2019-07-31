@@ -32,7 +32,7 @@ module EtCcdClient
         path = tpl.expand(uid: ui_idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.feeGroupReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
         url = "#{remote_config.api_url}#{path}"
         logger.debug("ET > Caseworker search by reference (#{url})")
-        resp = RestClient::Request.execute(method: :get, url: url, headers: { content_type: 'application/json', accept: 'application/json' }, cookies: { accessToken: ui_idam_client.user_token })
+        resp = RestClient::Request.execute(method: :get, url: url, headers: { content_type: 'application/json', accept: 'application/json' }, cookies: { accessToken: ui_idam_client.user_token }, proxy: config.proxy)
         resp_body = resp.body
         logger.debug("ET < Case worker search by reference - #{resp_body}")
         unless config.document_store_url_rewrite == false
@@ -67,7 +67,7 @@ module EtCcdClient
         path = tpl.expand(uid: ui_idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.ethosCaseReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
         url = "#{remote_config.api_url}#{path}"
         logger.debug("ET > Caseworker search by ethos case reference (#{url})")
-        resp = RestClient::Request.execute(method: :get, url: url, headers: { content_type: 'application/json', accept: 'application/json' }, cookies: { accessToken: ui_idam_client.user_token })
+        resp = RestClient::Request.execute(method: :get, url: url, headers: { content_type: 'application/json', accept: 'application/json' }, cookies: { accessToken: ui_idam_client.user_token }, proxy: config.proxy)
         resp_body = resp.body
         logger.debug("ET < Case worker search by ethos case reference - #{resp_body}")
         unless config.document_store_url_rewrite == false
@@ -102,7 +102,7 @@ module EtCcdClient
         path = tpl.expand(uid: ui_idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.multipleReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
         url = "#{remote_config.api_url}#{path}"
         logger.debug("ET > Caseworker search by multiple reference (#{url})")
-        resp = RestClient::Request.execute(method: :get, url: url, headers: { content_type: 'application/json', accept: 'application/json' }, cookies: { accessToken: ui_idam_client.user_token })
+        resp = RestClient::Request.execute(method: :get, url: url, headers: { content_type: 'application/json', accept: 'application/json' }, cookies: { accessToken: ui_idam_client.user_token }, proxy: config.proxy)
         logger.debug("ET < Case worker search by multiple reference - #{resp.body}")
         JSON.parse(resp.body)["results"]
       rescue RestClient::Exception => e

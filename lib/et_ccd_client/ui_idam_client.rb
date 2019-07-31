@@ -13,6 +13,10 @@ module EtCcdClient
       self.user_details = nil
       self.agent = Mechanize.new
       agent.verify_mode = config.verify_ssl ? OpenSSL::SSL::VERIFY_PEER : OpenSSL::SSL::VERIFY_NONE
+      if config.proxy
+        p = URL.parse(config.proxy)
+        agent.set_proxy(p.host, p.port)
+      end
     end
 
     def login(username: config.sidam_username, password: config.sidam_password)

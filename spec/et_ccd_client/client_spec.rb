@@ -28,7 +28,8 @@ RSpec.describe EtCcdClient::Client do
       use_sidam: true,
       sidam_username: 'm@m.com',
       sidam_password: 'p',
-      verify_ssl: false
+      verify_ssl: false,
+      proxy: false
     }
   end
   let(:mock_logger) do

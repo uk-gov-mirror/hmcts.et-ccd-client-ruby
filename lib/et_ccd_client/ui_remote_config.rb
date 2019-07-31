@@ -13,7 +13,7 @@ module EtCcdClient
     private
 
     def initialize
-      dynamic_config = JSON.parse(RestClient::Request.execute(method: :get, url: Config.instance.case_management_ui_config_url, verify_ssl: Config.instance.verify_ssl).body)
+      dynamic_config = JSON.parse(RestClient::Request.execute(method: :get, url: Config.instance.case_management_ui_config_url, verify_ssl: Config.instance.verify_ssl, proxy: config.proxy).body)
       dynamic_config.each_pair do |key, value|
         setter = :"#{key}="
         send(setter, value) if respond_to?(setter, true)
