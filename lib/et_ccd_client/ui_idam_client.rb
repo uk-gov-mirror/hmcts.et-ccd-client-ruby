@@ -14,7 +14,7 @@ module EtCcdClient
       self.agent = Mechanize.new
       agent.verify_mode = config.verify_ssl ? OpenSSL::SSL::VERIFY_PEER : OpenSSL::SSL::VERIFY_NONE
       if config.proxy
-        p = URL.parse(config.proxy)
+        p = URI.parse(config.proxy)
         agent.set_proxy(p.host, p.port)
       end
     end
