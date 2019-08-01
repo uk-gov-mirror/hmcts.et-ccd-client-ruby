@@ -38,13 +38,7 @@ module EtCcdClient
     def caseworker_start_case_creation(case_type_id:)
       logger.tagged('EtCcdClient::Client') do
         url = initiate_case_url(case_type_id, config.initiate_claim_event_id)
-        logger.debug("ET > Start case creation (#{url})")
-        resp = RestClient::Request.execute(method: :get, url: url, headers: { content_type: 'application/json', 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}", 'user-id' => idam_client.user_details['id'], 'user-roles' => idam_client.user_details['roles'].join(',') }, verify_ssl: config.verify_ssl)
-        logger.debug "ET < Start case creation - #{resp.body}"
-        JSON.parse(resp.body)
-      rescue RestClient::Exception => e
-        logger.debug "ET < Start case creation (ERROR) - #{e.response.body}"
-        Exceptions::Base.raise_exception(e, url: url)
+        get_request(url, log_subject: 'Start case creation')
       end
     end
 
@@ -55,13 +49,7 @@ module EtCcdClient
     def caseworker_start_bulk_creation(case_type_id:)
       logger.tagged('EtCcdClient::Client') do
         url = initiate_case_url(case_type_id, config.initiate_bulk_event_id)
-        logger.debug("ET > Start bulk creation (#{url})")
-        resp = RestClient::Request.execute(method: :get, url: url, headers: { content_type: 'application/json', 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}", 'user-id' => idam_client.user_details['id'], 'user-roles' => idam_client.user_details['roles'].join(',') }, verify_ssl: config.verify_ssl)
-        logger.debug "ET < Start bulk creation - #{resp.body}"
-        JSON.parse(resp.body)
-      rescue RestClient::Exception => e
-        logger.debug "ET < Start bulk creation (ERROR) - #{e.response.body}"
-        Exceptions::Base.raise_exception(e, url: url)
+        get_request(url, log_subject: 'Start bulk creation')
       end
     end
 
@@ -73,14 +61,7 @@ module EtCcdClient
       logger.tagged('EtCcdClient::Client') do
         tpl = Addressable::Template.new(config.create_case_url)
         url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id).to_s
-        logger.debug("ET > Caseworker create case (#{url}) - #{data.to_json}")
-        resp = RestClient::Request.execute(method: :post, url: url, payload: data, headers: { content_type: 'application/json', 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}" }, verify_ssl: config.verify_ssl)
-        resp_body = resp.body
-        logger.debug "ET < Case worker create case - #{resp_body}"
-        JSON.parse(resp_body)
-      rescue RestClient::Exception => e
-        logger.debug "ET < Case worker create case (ERROR) - #{e.response.body}"
-        Exceptions::Base.raise_exception(e, url: url)
+        post_request(url, data, log_subject: 'Case worker create case')
       end
     end
 
@@ -92,10 +73,11 @@ module EtCcdClient
     #
     # @return [Array<Hash>] The json response from the server
     def caseworker_search_by_reference(reference, case_type_id:, page: 1, sort_direction: 'desc')
-      tpl = Addressable::Template.new(config.cases_url)
-      url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.feeGroupReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
-      resp = RestClient.get(url, content_type: 'application/json', accept: 'application/json', 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}")
-      JSON.parse(resp.body)
+      logger.tagged('EtCcdClient::Client') do
+        tpl = Addressable::Template.new(config.cases_url)
+        url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.feeGroupReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
+        get_request(url, log_subject: 'Caseworker search by reference')
+      end
     end
 
     # Search for the latest case matching the reference.  Useful for testing
@@ -115,10 +97,11 @@ module EtCcdClient
     #
     # @return [Array<Hash>] The json response from the server
     def caseworker_search_by_multiple_reference(reference, case_type_id:, page: 1, sort_direction: 'desc')
-      tpl = Addressable::Template.new(config.cases_url)
-      url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.multipleReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
-      resp = RestClient.get(url, content_type: 'application/json', accept: 'application/json', 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}")
-      JSON.parse(resp.body)
+      logger.tagged('EtCcdClient::Client') do
+        tpl = Addressable::Template.new(config.cases_url)
+        url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.multipleReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
+        get_request(url, log_subject: 'Caseworker search by multiple reference')
+      end
     end
 
     # Search for the latest case matching the multiples reference.  Useful for testing
@@ -131,10 +114,11 @@ module EtCcdClient
     end
 
     def caseworker_cases_pagination_metadata(case_type_id:, query: {})
-      tpl = Addressable::Template.new(config.cases_pagination_metadata_url)
-      url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: query).to_s
-      meta_resp = RestClient.get(url, content_type: 'application/json', accept: 'application/json', 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}")
-      JSON.parse(meta_resp)
+      logger.tagged('EtCcdClient::Client') do
+        tpl = Addressable::Template.new(config.cases_pagination_metadata_url)
+        url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: query).to_s
+        get_request(url, log_subject: 'Caseworker cases pagination metadata')
+      end
     end
 
     # @param [String] filename The full path to the file to upload
@@ -151,6 +135,28 @@ module EtCcdClient
     end
 
     private
+
+    def get_request(url, log_subject:)
+      logger.debug("ET > #{log_subject} (#{url})")
+      req = RestClient::Request.new(method: :get, url: url, headers: { content_type: 'application/json', 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}", 'user-id' => idam_client.user_details['id'], 'user-roles' => idam_client.user_details['roles'].join(',') }, verify_ssl: config.verify_ssl)
+      resp = req.execute
+      logger.debug "ET < #{log_subject} - #{resp.body}"
+      JSON.parse(resp.body)
+    rescue RestClient::Exception => e
+      logger.debug "ET < #{log_subject} (ERROR) - #{e.response.body}"
+      Exceptions::Base.raise_exception(e, url: url, request: req)
+    end
+
+    def post_request(url, data, log_subject:)
+      logger.debug("ET > #{log_subject} (#{url}) - #{data.to_json}")
+      req = RestClient::Request.new(method: :post, url: url, payload: data, headers: { content_type: 'application/json', 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}", 'user-id' => idam_client.user_details['id'], 'user-roles' => idam_client.user_details['roles'].join(',') }, verify_ssl: config.verify_ssl)
+      resp = req.execute
+      logger.debug "ET < #{log_subject} - #{resp.body}"
+      JSON.parse(resp.body)
+    rescue RestClient::Exception => e
+      logger.debug "ET < #{log_subject} (ERROR) - #{e.response.body}"
+      Exceptions::Base.raise_exception(e, url: url, request: req)
+    end
 
     def download_from_remote_source(url)
       logger.tagged('EtCcdClient::Client') do

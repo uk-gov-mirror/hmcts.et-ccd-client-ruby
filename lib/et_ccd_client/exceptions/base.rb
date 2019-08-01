@@ -1,7 +1,7 @@
 module EtCcdClient
   module Exceptions
     class Base < ::StandardError
-      attr_reader :original_exception, :response, :url
+      attr_reader :original_exception, :url, :request
 
       def self.raise_exception(original_exception, **kw_args)
         expected_error_class = original_exception.class.name.split('::').last
@@ -16,9 +16,10 @@ module EtCcdClient
         new(*args, **kw_args)
       end
 
-      def initialize(original_exception, url: nil)
+      def initialize(original_exception, url: nil, request: nil)
         self.original_exception = original_exception
         self.url = url
+        self.request = request
       end
 
       def response
@@ -41,7 +42,7 @@ module EtCcdClient
 
       private
 
-      attr_writer :original_exception, :url
+      attr_writer :original_exception, :url, :request
     end
   end
 end

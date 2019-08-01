@@ -350,7 +350,7 @@ RSpec.describe EtCcdClient::Client do
       client.caseworker_case_create({ test: :data }, case_type_id: 'mycasetypeid')
 
       # Assert
-      expect(mock_logger).to have_received(:debug).with("ET > Caseworker create case (#{url}) - {\"test\":\"data\"}")
+      expect(mock_logger).to have_received(:debug).with("ET > Case worker create case (#{url}) - {\"test\":\"data\"}")
     end
 
     it "logs the response" do
