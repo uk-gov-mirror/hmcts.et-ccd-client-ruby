@@ -40,7 +40,7 @@ module EtCcdClient
         end
         JSON.parse(resp_body)["results"]
       rescue RestClient::Exception => e
-        logger.debug "ET < Case worker search by reference (ERROR) - #{e.response.body}"
+        logger.debug "ET < Case worker search by reference (ERROR) - #{e&.response&.body}"
         raise Exceptions::Base.raise_exception(e)
       end
     end

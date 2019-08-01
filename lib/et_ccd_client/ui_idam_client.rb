@@ -1,22 +1,14 @@
 require "addressable/template"
 require "addressable/uri"
 require 'et_ccd_client/config'
-require 'mechanize'
 module EtCcdClient
   class UiIdamClient
     attr_reader :service_token, :user_token, :user_details
 
-    def initialize(config: ::EtCcdClient.config, remote_config: ::EtCcdClient.ui_remote_config)
+    def initialize(config: ::EtCcdClient.config)
       self.config = config
-      self.remote_config = remote_config
       self.logger = config.logger
       self.user_details = nil
-      self.agent = Mechanize.new
-      agent.verify_mode = config.verify_ssl ? OpenSSL::SSL::VERIFY_PEER : OpenSSL::SSL::VERIFY_NONE
-      if config.proxy
-        p = URI.parse(config.proxy)
-        agent.set_proxy(p.host, p.port)
-      end
     end
 
     def login(username: config.sidam_username, password: config.sidam_password)
@@ -29,49 +21,24 @@ module EtCcdClient
     private
 
     attr_writer :user_token, :user_details
-    attr_accessor :config, :logger, :agent, :remote_config
+    attr_accessor :config, :logger
 
     def exchange_sidam_user_token(username, password)
-      url = login_url
+      url = "#{config.idam_base_url}/loginUser"
       logger.debug("ET > IdamUI user token exchange (#{url}) - username: #{username} password: '******'")
-      get_access_token(get_oauth_code(url, password, username)).tap do |token|
-        logger.debug "ET < IdamUI user token exchange - #{token}"
-      end
-    end
-
-    def get_access_token(oauth_code)
-      uri = Addressable::URI.parse(remote_config.oauth2_token_endpoint_url)
-      uri.query_values = { code: oauth_code, redirect_uri: config.case_management_ui_redirect_url }
-      agent.get(uri.to_s)
-      agent.cookies.detect { |cookie| cookie.name == 'accessToken' }.value
-    end
-
-    def get_oauth_code(url, password, username)
-      agent.get(url)
-      form = agent.current_page.form_with(name: 'loginForm')
-      form.username = username
-      form.password = password
-      form.submit
-      Addressable::URI.parse(agent.current_page.uri).query_values['code']
+      resp = RestClient::Request.execute(method: :post, url: url, payload: {username: username, password: password}, headers: { content_type: 'application/x-www-form-urlencoded', accept: 'application/json' }, verify_ssl: config.verify_ssl)
+      token = JSON.parse(resp.body)['access_token']
+      logger.debug "ET < IdamUI user token exchange - #{token}"
+      token
     end
 
     def get_user_details
-      url = "#{remote_config.case_data_url}/internal/profile"
+      url = "#{config.idam_base_url}/details"
       logger.debug("ET > UiIdam get user details (#{url})")
-      resp = agent.get url, [], agent.current_page, 'Content-Type' => 'application/json', 'Accept' => 'application/vnd.uk.gov.hmcts.ccd-data-store-api.ui-user-profile.v2+json;charset=UTF-8', 'experimental' => true
+      resp = RestClient::Request.execute(method: :get, url: url, headers: { 'Accept' => 'application/json', 'Authorization' => user_token }, verify_ssl: config.verify_ssl)
       resp_body = resp.body
       logger.debug "ET < UiIdam get user details : #{resp_body}"
-      JSON.parse(resp_body).dig('user', 'idam')
-    end
-
-    def login_url
-      uri = Addressable::URI.parse remote_config.login_url
-      uri.query_values = {
-          response_type: :code,
-          client_id: remote_config.oauth2_client_id,
-          redirect_uri: config.case_management_ui_redirect_url
-      }
-      uri.to_s
+      JSON.parse(resp_body)
     end
   end
 end
