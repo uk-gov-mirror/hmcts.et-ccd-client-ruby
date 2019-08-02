@@ -3,6 +3,7 @@ require 'rest_client'
 require 'et_ccd_client/idam_client'
 require 'et_ccd_client/config'
 require 'et_ccd_client/exceptions'
+require 'et_ccd_client/common_rest_client'
 require 'json'
 require 'forwardable'
 require 'connection_pool'
@@ -10,6 +11,8 @@ module EtCcdClient
   # A client to interact with the CCD API (backend)
   class Client
     extend Forwardable
+    include CommonRestClient
+
 
     def initialize(idam_client: nil, config: ::EtCcdClient.config)
       self.idam_client = idam_client || (config.use_sidam ? IdamClient.new : TidamClient.new)
@@ -38,7 +41,7 @@ module EtCcdClient
     def caseworker_start_case_creation(case_type_id:)
       logger.tagged('EtCcdClient::Client') do
         url = initiate_case_url(case_type_id, config.initiate_claim_event_id)
-        get_request(url, log_subject: 'Start case creation')
+        get_request(url, log_subject: 'Start case creation', extra_headers: headers_from_idam_client)
       end
     end
 
@@ -49,7 +52,7 @@ module EtCcdClient
     def caseworker_start_bulk_creation(case_type_id:)
       logger.tagged('EtCcdClient::Client') do
         url = initiate_case_url(case_type_id, config.initiate_bulk_event_id)
-        get_request(url, log_subject: 'Start bulk creation')
+        get_request(url, log_subject: 'Start bulk creation', extra_headers: headers_from_idam_client)
       end
     end
 
@@ -61,7 +64,7 @@ module EtCcdClient
       logger.tagged('EtCcdClient::Client') do
         tpl = Addressable::Template.new(config.create_case_url)
         url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id).to_s
-        post_request(url, data, log_subject: 'Case worker create case')
+        post_request(url, data, log_subject: 'Case worker create case', extra_headers: headers_from_idam_client)
       end
     end
 
@@ -76,7 +79,7 @@ module EtCcdClient
       logger.tagged('EtCcdClient::Client') do
         tpl = Addressable::Template.new(config.cases_url)
         url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.feeGroupReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
-        get_request(url, log_subject: 'Caseworker search by reference')
+        get_request(url, log_subject: 'Caseworker search by reference', extra_headers: headers_from_idam_client)
       end
     end
 
@@ -100,7 +103,7 @@ module EtCcdClient
       logger.tagged('EtCcdClient::Client') do
         tpl = Addressable::Template.new(config.cases_url)
         url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.multipleReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
-        get_request(url, log_subject: 'Caseworker search by multiple reference')
+        get_request(url, log_subject: 'Caseworker search by multiple reference', extra_headers: headers_from_idam_client)
       end
     end
 
@@ -117,7 +120,7 @@ module EtCcdClient
       logger.tagged('EtCcdClient::Client') do
         tpl = Addressable::Template.new(config.cases_pagination_metadata_url)
         url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: query).to_s
-        get_request(url, log_subject: 'Caseworker cases pagination metadata')
+        get_request(url, log_subject: 'Caseworker cases pagination metadata', extra_headers: headers_from_idam_client)
       end
     end
 
@@ -136,28 +139,6 @@ module EtCcdClient
 
     private
 
-    def get_request(url, log_subject:)
-      logger.debug("ET > #{log_subject} (#{url})")
-      req = RestClient::Request.new(method: :get, url: url, headers: { content_type: 'application/json', 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}", 'user-id' => idam_client.user_details['id'], 'user-roles' => idam_client.user_details['roles'].join(',') }, verify_ssl: config.verify_ssl)
-      resp = req.execute
-      logger.debug "ET < #{log_subject} - #{resp.body}"
-      JSON.parse(resp.body)
-    rescue RestClient::Exception => e
-      logger.debug "ET < #{log_subject} (ERROR) - #{e.response.body}"
-      Exceptions::Base.raise_exception(e, url: url, request: req)
-    end
-
-    def post_request(url, data, log_subject:)
-      logger.debug("ET > #{log_subject} (#{url}) - #{data.to_json}")
-      req = RestClient::Request.new(method: :post, url: url, payload: data, headers: { content_type: 'application/json', 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}", 'user-id' => idam_client.user_details['id'], 'user-roles' => idam_client.user_details['roles'].join(',') }, verify_ssl: config.verify_ssl)
-      resp = req.execute
-      logger.debug "ET < #{log_subject} - #{resp.body}"
-      JSON.parse(resp.body)
-    rescue RestClient::Exception => e
-      logger.debug "ET < #{log_subject} (ERROR) - #{e.response.body}"
-      Exceptions::Base.raise_exception(e, url: url, request: req)
-    end
-
     def download_from_remote_source(url)
       logger.tagged('EtCcdClient::Client') do
         logger.debug("ET > Download from remote source (#{url})")
@@ -173,7 +154,7 @@ module EtCcdClient
     def upload_file_from_source(filename, content_type:, source_name:, source:, original_filename: filename)
       logger.tagged('EtCcdClient::Client') do
         url = config.upload_file_url
-        logger.debug("ET > Upload file from #{source_name} (#{source})")
+        logger.debug("ET > Upload file from #{source_name} (#{url})")
         uploaded_file = UploadedFile.new(filename, content_type: content_type, binary: true, original_filename: original_filename)
         data = {
           multipart: true,
@@ -201,6 +182,10 @@ module EtCcdClient
     def rewrite_document_store_urls(body)
       source_host, source_port, dest_host, dest_port = config.document_store_url_rewrite
       body.gsub(/(https?):\/\/#{source_host}:#{source_port}/, "\\1://#{dest_host}:#{dest_port}")
+    end
+
+    def headers_from_idam_client
+      {'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}", 'user-id' => idam_client.user_details['id'], 'user-roles' => idam_client.user_details['roles'].join(',')}
     end
 
     attr_accessor :idam_client, :config, :logger

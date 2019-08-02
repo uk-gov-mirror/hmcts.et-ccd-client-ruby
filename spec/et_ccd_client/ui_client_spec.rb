@@ -11,6 +11,7 @@ RSpec.describe EtCcdClient::UiClient do
       auth_base_url: 'http://auth.mock.com',
       idam_base_url: 'http://idam.mock.com',
       data_store_base_url: 'http://data.mock.com',
+      gateway_api_url: 'http://gateway.mock.com',
       document_store_url_rewrite: false,
       jurisdiction_id: 'mockjid',
       microservice: 'mockmicroservice',
@@ -108,7 +109,7 @@ RSpec.describe EtCcdClient::UiClient do
     end
     it "performs the correct http request" do
       # Arrange - stub the url
-      stub = stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
+      stub = stub_request(:get, "http://gateway.mock.com/aggregated/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
              with(query: { 'case.feeGroupReference' => reference, page: 1, 'sortDirection' => 'desc' }).
              to_return(body: response_for_empty_collection.to_json, headers: default_response_headers, status: 200)
 
@@ -121,7 +122,7 @@ RSpec.describe EtCcdClient::UiClient do
 
     it "returns the correct json" do
       # Arrange - stub the url
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
+      stub_request(:get, "http://gateway.mock.com/aggregated/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
         with(query: { 'case.feeGroupReference' => reference, page: 1, 'sortDirection' => 'desc' }).
         to_return(body: response_for_one_entry.to_json, headers: default_response_headers, status: 200)
 
@@ -134,7 +135,7 @@ RSpec.describe EtCcdClient::UiClient do
 
     it "uses a tagged logger" do
       # Arrange - stub the url
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
+      stub_request(:get, "http://gateway.mock.com/aggregated/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
         with(query: { 'case.feeGroupReference' => reference, page: 1, 'sortDirection' => 'desc' }).
         to_return(body: response_for_empty_collection.to_json, headers: default_response_headers, status: 200)
 
@@ -147,7 +148,7 @@ RSpec.describe EtCcdClient::UiClient do
 
     it "logs the request" do
       # Arrange - stub the url
-      url = "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases"
+      url = "http://gateway.mock.com/aggregated/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases"
       stub_request(:get, url).
         with(query: { 'case.feeGroupReference' => reference, page: 1, 'sortDirection' => 'desc' }).
         to_return(body: response_for_empty_collection.to_json, headers: default_response_headers, status: 200)
@@ -159,41 +160,12 @@ RSpec.describe EtCcdClient::UiClient do
       expect(mock_logger).to have_received(:debug).with(start_with("ET > Caseworker search by reference (#{url}"))
     end
 
-    it "logs the response" do
-      # Arrange - stub the url
-      resp_body = response_for_empty_collection.to_json
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
-        with(query: { 'case.feeGroupReference' => reference, page: 1, 'sortDirection' => 'desc' }).
-        to_return(body: resp_body, headers: default_response_headers, status: 200)
 
-      # Act - Call the method
-      client.caseworker_search_by_reference(reference, case_type_id: 'mycasetypeid')
-
-      # Assert
-      expect(mock_logger).to have_received(:debug).with("ET < Case worker search by reference - #{resp_body}")
-    end
-
-    it "logs the response under error conditions" do
-      # Arrange - stub the url
-      resp_body = response_for_error.to_json
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
-        with(query: { 'case.feeGroupReference' => reference, page: 1, 'sortDirection' => 'desc' }).
-        to_return(body: resp_body, headers: default_response_headers, status: 500)
-
-      # Act - Call the method
-      action = -> { client.caseworker_search_by_reference(reference, case_type_id: 'mycasetypeid') }
-
-      # Assert
-      aggregate_failures "Both exception should be raised and log should be recorded" do
-        expect(action).to raise_exception(EtCcdClient::Exceptions::InternalServerError)
-        expect(mock_logger).to have_received(:debug).with("ET < Case worker search by reference (ERROR) - #{resp_body}")
-      end
-    end
 
     it "re raises the response with the response body available under error conditions with detailed message" do
       # Arrange - stub the url
       resp_body = response_for_error.to_json
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
+      stub_request(:get, "http://gateway.mock.com/aggregated/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
         with(query: { 'case.feeGroupReference' => reference, page: 1, 'sortDirection' => 'desc' }).
         to_return(body: resp_body, headers: default_response_headers, status: 500)
 
@@ -205,14 +177,13 @@ RSpec.describe EtCcdClient::UiClient do
         expect(action).to raise_error(EtCcdClient::Exceptions::InternalServerError) do |error|
           expect(error.message).to include("Internal Server Error")
         end
-        expect(mock_logger).to have_received(:debug).with("ET < Case worker search by reference (ERROR) - #{resp_body}")
       end
     end
 
     it "re raises the response with the response body available under error conditions with standard message" do
       # Arrange - stub the url
       resp_body = '{"message": "Unauthorized"}'
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
+      stub_request(:get, "http://gateway.mock.com/aggregated/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
         with(query: { 'case.feeGroupReference' => reference, page: 1, 'sortDirection' => 'desc' }).
         to_return(body: resp_body, headers: default_response_headers, status: 401)
 
@@ -224,7 +195,6 @@ RSpec.describe EtCcdClient::UiClient do
         expect(action).to raise_error(EtCcdClient::Exceptions::Base) do |error|
           expect(error.message).to include("Unauthorized")
         end
-        expect(mock_logger).to have_received(:debug).with("ET < Case worker search by reference (ERROR) - #{resp_body}")
       end
     end
   end
@@ -254,7 +224,7 @@ RSpec.describe EtCcdClient::UiClient do
     end
     it "performs the correct http request" do
       # Arrange - stub the url
-      stub = stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
+      stub = stub_request(:get, "http://gateway.mock.com/aggregated/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
              with(query: { 'case.ethosCaseReference' => reference, page: 1, 'sortDirection' => 'desc' }).
              to_return(body: response_for_empty_collection.to_json, headers: default_response_headers, status: 200)
 
@@ -267,7 +237,7 @@ RSpec.describe EtCcdClient::UiClient do
 
     it "returns the correct json" do
       # Arrange - stub the url
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
+      stub_request(:get, "http://gateway.mock.com/aggregated/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
         with(query: { 'case.ethosCaseReference' => reference, page: 1, 'sortDirection' => 'desc' }).
         to_return(body: response_for_one_entry.to_json, headers: default_response_headers, status: 200)
 
@@ -280,7 +250,7 @@ RSpec.describe EtCcdClient::UiClient do
 
     it "uses a tagged logger" do
       # Arrange - stub the url
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
+      stub_request(:get, "http://gateway.mock.com/aggregated/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
         with(query: { 'case.ethosCaseReference' => reference, page: 1, 'sortDirection' => 'desc' }).
         to_return(body: response_for_empty_collection.to_json, headers: default_response_headers, status: 200)
 
@@ -293,7 +263,7 @@ RSpec.describe EtCcdClient::UiClient do
 
     it "logs the request" do
       # Arrange - stub the url
-      url = "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases"
+      url = "http://gateway.mock.com/aggregated/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases"
       stub_request(:get, url).
         with(query: { 'case.ethosCaseReference' => reference, page: 1, 'sortDirection' => 'desc' }).
         to_return(body: response_for_empty_collection.to_json, headers: default_response_headers, status: 200)
@@ -305,41 +275,10 @@ RSpec.describe EtCcdClient::UiClient do
       expect(mock_logger).to have_received(:debug).with(start_with("ET > Caseworker search by ethos case reference (#{url}"))
     end
 
-    it "logs the response" do
-      # Arrange - stub the url
-      resp_body = response_for_empty_collection.to_json
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
-        with(query: { 'case.ethosCaseReference' => reference, page: 1, 'sortDirection' => 'desc' }).
-        to_return(body: resp_body, headers: default_response_headers, status: 200)
-
-      # Act - Call the method
-      client.caseworker_search_by_ethos_case_reference(reference, case_type_id: 'mycasetypeid')
-
-      # Assert
-      expect(mock_logger).to have_received(:debug).with("ET < Case worker search by ethos case reference - #{resp_body}")
-    end
-
-    it "logs the response under error conditions" do
-      # Arrange - stub the url
-      resp_body = response_for_error.to_json
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
-        with(query: { 'case.ethosCaseReference' => reference, page: 1, 'sortDirection' => 'desc' }).
-        to_return(body: resp_body, headers: default_response_headers, status: 500)
-
-      # Act - Call the method
-      action = -> { client.caseworker_search_by_ethos_case_reference(reference, case_type_id: 'mycasetypeid') }
-
-      # Assert
-      aggregate_failures "Both exception should be raised and log should be recorded" do
-        expect(action).to raise_exception(EtCcdClient::Exceptions::InternalServerError)
-        expect(mock_logger).to have_received(:debug).with("ET < Case worker search by ethos case reference (ERROR) - #{resp_body}")
-      end
-    end
-
     it "re raises the response with the response body available under error conditions with detailed message" do
       # Arrange - stub the url
       resp_body = response_for_error.to_json
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
+      stub_request(:get, "http://gateway.mock.com/aggregated/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
         with(query: { 'case.ethosCaseReference' => reference, page: 1, 'sortDirection' => 'desc' }).
         to_return(body: resp_body, headers: default_response_headers, status: 500)
 
@@ -351,14 +290,13 @@ RSpec.describe EtCcdClient::UiClient do
         expect(action).to raise_error(EtCcdClient::Exceptions::InternalServerError) do |error|
           expect(error.message).to include("Internal Server Error")
         end
-        expect(mock_logger).to have_received(:debug).with("ET < Case worker search by ethos case reference (ERROR) - #{resp_body}")
       end
     end
 
     it "re raises the response with the response body available under error conditions with standard message" do
       # Arrange - stub the url
       resp_body = '{"message": "Unauthorized"}'
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
+      stub_request(:get, "http://gateway.mock.com/aggregated/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
         with(query: { 'case.ethosCaseReference' => reference, page: 1, 'sortDirection' => 'desc' }).
         to_return(body: resp_body, headers: default_response_headers, status: 401)
 
@@ -370,7 +308,6 @@ RSpec.describe EtCcdClient::UiClient do
         expect(action).to raise_error(EtCcdClient::Exceptions::Base) do |error|
           expect(error.message).to include("Unauthorized")
         end
-        expect(mock_logger).to have_received(:debug).with("ET < Case worker search by ethos case reference (ERROR) - #{resp_body}")
       end
     end
   end
@@ -400,7 +337,7 @@ RSpec.describe EtCcdClient::UiClient do
     end
     it "performs the correct http request" do
       # Arrange - stub the url
-      stub = stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
+      stub = stub_request(:get, "http://gateway.mock.com/aggregated/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
              with(query: { 'case.multipleReference' => reference, page: 1, 'sortDirection' => 'desc' }).
              to_return(body: response_for_empty_collection.to_json, headers: default_response_headers, status: 200)
 
@@ -413,7 +350,7 @@ RSpec.describe EtCcdClient::UiClient do
 
     it "returns the correct json" do
       # Arrange - stub the url
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
+      stub_request(:get, "http://gateway.mock.com/aggregated/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
         with(query: { 'case.multipleReference' => reference, page: 1, 'sortDirection' => 'desc' }).
         to_return(body: response_for_one_entry.to_json, headers: default_response_headers, status: 200)
 
@@ -426,7 +363,7 @@ RSpec.describe EtCcdClient::UiClient do
 
     it "uses a tagged logger" do
       # Arrange - stub the url
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
+      stub_request(:get, "http://gateway.mock.com/aggregated/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
         with(query: { 'case.multipleReference' => reference, page: 1, 'sortDirection' => 'desc' }).
         to_return(body: response_for_empty_collection.to_json, headers: default_response_headers, status: 200)
 
@@ -437,24 +374,10 @@ RSpec.describe EtCcdClient::UiClient do
       expect(mock_logger).to have_received(:tagged)
     end
 
-    it "logs the request" do
-      # Arrange - stub the url
-      url = "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases"
-      stub_request(:get, url).
-        with(query: { 'case.multipleReference' => reference, page: 1, 'sortDirection' => 'desc' }).
-        to_return(body: response_for_empty_collection.to_json, headers: default_response_headers, status: 200)
-
-      # Act - Call the method
-      client.caseworker_search_by_multiple_reference(reference, case_type_id: 'mycasetypeid')
-
-      # Assert
-      expect(mock_logger).to have_received(:debug).with(start_with("ET > Caseworker search by multiple reference (#{url}"))
-    end
-
     it "logs the response" do
       # Arrange - stub the url
       resp_body = response_for_empty_collection.to_json
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
+      stub_request(:get, "http://gateway.mock.com/aggregated/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
         with(query: { 'case.multipleReference' => reference, page: 1, 'sortDirection' => 'desc' }).
         to_return(body: resp_body, headers: default_response_headers, status: 200)
 
@@ -468,7 +391,7 @@ RSpec.describe EtCcdClient::UiClient do
     it "logs the response under error conditions" do
       # Arrange - stub the url
       resp_body = response_for_error.to_json
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
+      stub_request(:get, "http://gateway.mock.com/aggregated/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
         with(query: { 'case.multipleReference' => reference, page: 1, 'sortDirection' => 'desc' }).
         to_return(body: resp_body, headers: default_response_headers, status: 500)
 
@@ -485,7 +408,7 @@ RSpec.describe EtCcdClient::UiClient do
     it "re raises the response with the response body available under error conditions with detailed message" do
       # Arrange - stub the url
       resp_body = response_for_error.to_json
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
+      stub_request(:get, "http://gateway.mock.com/aggregated/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
         with(query: { 'case.multipleReference' => reference, page: 1, 'sortDirection' => 'desc' }).
         to_return(body: resp_body, headers: default_response_headers, status: 500)
 
@@ -504,7 +427,7 @@ RSpec.describe EtCcdClient::UiClient do
     it "re raises the response with the response body available under error conditions with standard message" do
       # Arrange - stub the url
       resp_body = '{"message": "Unauthorized"}'
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
+      stub_request(:get, "http://gateway.mock.com/aggregated/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
         with(query: { 'case.multipleReference' => reference, page: 1, 'sortDirection' => 'desc' }).
         to_return(body: resp_body, headers: default_response_headers, status: 401)
 

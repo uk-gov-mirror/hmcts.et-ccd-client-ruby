@@ -142,71 +142,14 @@ RSpec.describe EtCcdClient::Client do
       expect(result).to eq("test" => "value")
     end
 
-    it "uses a tagged logger" do
-      # Arrange - stub the url
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiateevent/token").
-        to_return(body: '{"test":"value"}', headers: default_response_headers, status: 200)
-
-      # Act - Call the method
-      client.caseworker_start_case_creation(case_type_id: 'mycasetypeid')
-
-      # Assert
-      expect(mock_logger).to have_received(:tagged)
+    it_behaves_like 'common GET logging examples', log_subject: 'Start case creation' do
+      let(:url) { "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiateevent/token" }
+      let(:action) { -> { client.caseworker_start_case_creation(case_type_id: 'mycasetypeid') } }
     end
 
-    it "logs the request" do
-      # Arrange - stub the url
-      url = "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiateevent/token"
-      stub_request(:get, url).
-        to_return(body: '{"test":"value"}', headers: default_response_headers, status: 200)
-
-      # Act - Call the method
-      client.caseworker_start_case_creation(case_type_id: 'mycasetypeid')
-
-      # Assert
-      expect(mock_logger).to have_received(:debug).with("ET > Start case creation (#{url})")
-    end
-
-    it "logs the response" do
-      # Arrange - stub the url
-      resp_body = '{"test":"value"}'
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiateevent/token").
-        to_return(body: resp_body, headers: default_response_headers, status: 200)
-
-      # Act - Call the method
-      client.caseworker_start_case_creation(case_type_id: 'mycasetypeid')
-
-      # Assert
-      expect(mock_logger).to have_received(:debug).with("ET < Start case creation - #{resp_body}")
-    end
-
-    it "logs the response under error conditions" do
-      # Arrange - stub the url
-      resp_body = '{"message": "Not found"}'
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiateevent/token").
-        to_return(body: resp_body, headers: default_response_headers, status: 404)
-
-      # Act - Call the method
-      action = -> { client.caseworker_start_case_creation(case_type_id: 'mycasetypeid') }
-
-      # Assert
-      aggregate_failures "Both exception should be raised and log should be recorded" do
-        expect(action).to raise_exception(EtCcdClient::Exceptions::Base)
-        expect(mock_logger).to have_received(:debug).with("ET < Start case creation (ERROR) - #{resp_body}")
-      end
-    end
-
-    it "raises an error with the url present if the server responds with an error" do
-      # Arrange - stub the url
-      resp_body = '{"message": "Not found"}'
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiateevent/token").
-        to_return(body: resp_body, headers: default_response_headers, status: 404)
-
-      # Act - Call the method
-      action = -> { client.caseworker_start_case_creation(case_type_id: 'mycasetypeid') }
-
-      # Assert
-      expect(action).to raise_exception(EtCcdClient::Exceptions::Base, "404 Not Found - Not found ('http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiateevent/token')")
+    it_behaves_like "common GET exception handling examples" do
+      let(:url) { "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiateevent/token" }
+      let(:action) { -> { client.caseworker_start_case_creation(case_type_id: 'mycasetypeid') } }
     end
   end
   describe "#caseworker_start_bulk_creation" do
@@ -234,71 +177,14 @@ RSpec.describe EtCcdClient::Client do
       expect(result).to eq("test" => "value")
     end
 
-    it "uses a tagged logger" do
-      # Arrange - stub the url
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiatebulkevent/token").
-        to_return(body: '{"test":"value"}', headers: default_response_headers, status: 200)
-
-      # Act - Call the method
-      client.caseworker_start_bulk_creation(case_type_id: 'mycasetypeid')
-
-      # Assert
-      expect(mock_logger).to have_received(:tagged)
+    it_behaves_like 'common GET logging examples', log_subject: 'Start bulk creation' do
+      let(:url) { "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiatebulkevent/token" }
+      let(:action) { -> { client.caseworker_start_bulk_creation(case_type_id: 'mycasetypeid') } }
     end
 
-    it "logs the request" do
-      # Arrange - stub the url
-      url = "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiatebulkevent/token"
-      stub_request(:get, url).
-        to_return(body: '{"test":"value"}', headers: default_response_headers, status: 200)
-
-      # Act - Call the method
-      client.caseworker_start_bulk_creation(case_type_id: 'mycasetypeid')
-
-      # Assert
-      expect(mock_logger).to have_received(:debug).with("ET > Start bulk creation (#{url})")
-    end
-
-    it "logs the response" do
-      # Arrange - stub the url
-      resp_body = '{"test":"value"}'
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiatebulkevent/token").
-        to_return(body: resp_body, headers: default_response_headers, status: 200)
-
-      # Act - Call the method
-      client.caseworker_start_bulk_creation(case_type_id: 'mycasetypeid')
-
-      # Assert
-      expect(mock_logger).to have_received(:debug).with("ET < Start bulk creation - #{resp_body}")
-    end
-
-    it "logs the response under error conditions" do
-      # Arrange - stub the url
-      resp_body = '{"message": "Not found"}'
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiatebulkevent/token").
-        to_return(body: resp_body, headers: default_response_headers, status: 404)
-
-      # Act - Call the method
-      action = -> { client.caseworker_start_bulk_creation(case_type_id: 'mycasetypeid') }
-
-      # Assert
-      aggregate_failures "Both exception should be raised and log should be recorded" do
-        expect(action).to raise_exception(EtCcdClient::Exceptions::Base)
-        expect(mock_logger).to have_received(:debug).with("ET < Start bulk creation (ERROR) - #{resp_body}")
-      end
-    end
-
-    it "raises an error with the url present if the server responds with an error" do
-      # Arrange - stub the url
-      resp_body = '{"message": "Not found"}'
-      stub_request(:get, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiatebulkevent/token").
-        to_return(body: resp_body, headers: default_response_headers, status: 404)
-
-      # Act - Call the method
-      action = -> { client.caseworker_start_bulk_creation(case_type_id: 'mycasetypeid') }
-
-      # Assert
-      expect(action).to raise_exception(EtCcdClient::Exceptions::Base, "404 Not Found - Not found ('http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiatebulkevent/token')")
+    it_behaves_like "common GET exception handling examples" do
+      let(:url) { "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiatebulkevent/token" }
+      let(:action) { -> { client.caseworker_start_bulk_creation(case_type_id: 'mycasetypeid') } }
     end
   end
 
@@ -328,137 +214,14 @@ RSpec.describe EtCcdClient::Client do
       expect(result).to eql("test" => "value")
     end
 
-    it "uses a tagged logger" do
-      # Arrange - stub the url
-      stub_request(:post, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
-        to_return(body: '{}', headers: default_response_headers, status: 200)
-
-      # Act - Call the method
-      client.caseworker_case_create({}, case_type_id: 'mycasetypeid')
-
-      # Assert
-      expect(mock_logger).to have_received(:tagged)
+    it_behaves_like 'common POST logging examples', log_subject: 'Case worker create case' do
+      let(:url) { "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases" }
+      let(:action) { -> (data = {}) { client.caseworker_case_create(data, case_type_id: 'mycasetypeid') } }
     end
 
-    it "logs the request" do
-      # Arrange - stub the url
-      url = "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases"
-      stub_request(:post, url).
-        to_return(body: '{}', headers: default_response_headers, status: 200)
-
-      # Act - Call the method
-      client.caseworker_case_create({ test: :data }, case_type_id: 'mycasetypeid')
-
-      # Assert
-      expect(mock_logger).to have_received(:debug).with("ET > Case worker create case (#{url}) - {\"test\":\"data\"}")
-    end
-
-    it "logs the response" do
-      # Arrange - stub the url
-      resp_body = '{"test":"value"}'
-      stub_request(:post, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
-        to_return(body: resp_body, headers: default_response_headers, status: 200)
-
-      # Act - Call the method
-      client.caseworker_case_create({}, case_type_id: 'mycasetypeid')
-
-      # Assert
-      expect(mock_logger).to have_received(:debug).with("ET < Case worker create case - #{resp_body}")
-    end
-
-    it "logs the response under error conditions" do
-      # Arrange - stub the url
-      resp_body = {
-        "exception": "uk.gov.hmcts.ccd.endpoint.exceptions.CaseValidationException",
-        "timestamp": "2019-06-23T17:13:07.282",
-        "status": 422,
-        "error": "Unprocessable Entity",
-        "message": "Case data validation failed",
-        "path": "/caseworkers/22/jurisdictions/EMPLOYMENT/case-types/EmpTrib_MVP_1.0_Manc/cases",
-        "details": {
-          "field_errors": [
-            {
-              "id": "claimantType.claimant_addressUK.PostCode",
-              "message": "1065^&%$£@():?><*& exceed maximum length 14"
-            }
-          ]
-        }
-      }.to_json
-      stub_request(:post, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
-        to_return(body: resp_body, headers: default_response_headers, status: 422)
-
-      # Act - Call the method
-      action = -> { client.caseworker_case_create({}, case_type_id: 'mycasetypeid') }
-
-      # Assert
-      aggregate_failures "Both exception should be raised and log should be recorded" do
-        expect(action).to raise_exception(EtCcdClient::Exceptions::UnprocessableEntity)
-        expect(mock_logger).to have_received(:debug).with("ET < Case worker create case (ERROR) - #{resp_body}")
-      end
-    end
-
-    it "re raises the response with the response body available under error conditions with detailed message" do
-      # Arrange - stub the url
-      resp_body = {
-        "exception": "uk.gov.hmcts.ccd.endpoint.exceptions.CaseValidationException",
-        "timestamp": "2019-06-23T17:13:07.282",
-        "status": 422,
-        "error": "Unprocessable Entity",
-        "message": "Case data validation failed",
-        "path": "/caseworkers/22/jurisdictions/EMPLOYMENT/case-types/EmpTrib_MVP_1.0_Manc/cases",
-        "details": {
-          "field_errors": [
-            {
-              "id": "claimantType.claimant_addressUK.PostCode",
-              "message": "1065^&%$£@():?><*& exceed maximum length 14"
-            }
-          ]
-        }
-      }.to_json
-      stub_request(:post, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
-        to_return(body: resp_body, headers: default_response_headers, status: 422)
-
-      # Act - Call the method
-      case_create = -> { client.caseworker_case_create({}, case_type_id: 'mycasetypeid') }
-
-      # Assert
-      aggregate_failures "Both exception should be raised and log should be recorded" do
-        expect(case_create).to raise_error(EtCcdClient::Exceptions::UnprocessableEntity) do |error|
-          expect(error.message).to include("claimantType.claimant_addressUK.PostCode => 1065^&%$£@():?><*& exceed maximum length 14")
-        end
-        expect(mock_logger).to have_received(:debug).with("ET < Case worker create case (ERROR) - #{resp_body}")
-      end
-    end
-
-    it "re raises the response with the response body available under error conditions with standard message" do
-      # Arrange - stub the url
-      resp_body = '{"message": "Unauthorized"}'
-      stub_request(:post, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
-        to_return(body: resp_body, headers: default_response_headers, status: 401)
-
-      # Act - Call the method
-      case_create = -> { client.caseworker_case_create({}, case_type_id: 'mycasetypeid') }
-
-      # Assert
-      aggregate_failures "Both exception should be raised and log should be recorded" do
-        expect(case_create).to raise_error(EtCcdClient::Exceptions::Base) do |error|
-          expect(error.message).to include("Unauthorized")
-        end
-        expect(mock_logger).to have_received(:debug).with("ET < Case worker create case (ERROR) - #{resp_body}")
-      end
-    end
-
-    it "raises an error with the url present if the server responds with an error" do
-      # Arrange - stub the url
-      resp_body = '{"message": "Not Found"}'
-      stub_request(:post, "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases").
-        to_return(body: resp_body, headers: default_response_headers, status: 404)
-
-      # Act - Call the method
-      case_create = -> { client.caseworker_case_create({}, case_type_id: 'mycasetypeid') }
-
-      # Assert
-      expect(case_create).to raise_error(EtCcdClient::Exceptions::Base, "404 Not Found - Not Found ('http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases')")
+    it_behaves_like "common POST exception handling examples" do
+      let(:url) { "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases" }
+      let(:action) { -> (data = {}) { client.caseworker_case_create(data, case_type_id: 'mycasetypeid') } }
     end
   end
 
@@ -649,7 +412,7 @@ RSpec.describe EtCcdClient::Client do
       client.upload_file_from_filename(filename, content_type: 'application/pdf')
 
       # Assert
-      expect(mock_logger).to have_received(:debug).with("ET > Upload file from filename (#{filename})")
+      expect(mock_logger).to have_received(:debug).with("ET > Upload file from filename (http://documents.mock.com/documents)")
     end
 
     it "logs the response" do
@@ -876,7 +639,7 @@ RSpec.describe EtCcdClient::Client do
       client.upload_file_from_url(input_url, content_type: 'application/pdf')
 
       # Assert
-      expect(mock_logger).to have_received(:debug).with("ET > Upload file from url (#{input_url})")
+      expect(mock_logger).to have_received(:debug).with("ET > Upload file from url (http://documents.mock.com/documents)")
     end
 
     it "logs the response" do

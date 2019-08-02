@@ -3,12 +3,14 @@ require 'rest_client'
 require 'et_ccd_client/ui_idam_client'
 require 'et_ccd_client/config'
 require 'et_ccd_client/exceptions'
+require 'et_ccd_client/common_rest_client'
 require 'json'
 require 'forwardable'
 module EtCcdClient
   # A client to interact with the CCD UI API (front end)
   class UiClient
     extend Forwardable
+    include CommonRestClient
 
     def initialize(ui_idam_client: UiIdamClient.new, config: ::EtCcdClient.config, remote_config: ::EtCcdClient.ui_remote_config)
       self.ui_idam_client = ui_idam_client
@@ -30,18 +32,12 @@ module EtCcdClient
       logger.tagged('EtCcdClient::UiClient') do
         tpl = Addressable::Template.new(config.cases_path)
         path = tpl.expand(uid: ui_idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.feeGroupReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
-        url = "#{remote_config.api_url}#{path}"
-        logger.debug("ET > Caseworker search by reference (#{url})")
-        resp = RestClient::Request.execute(method: :get, url: url, headers: { content_type: 'application/json', accept: 'application/json' }, cookies: { accessToken: ui_idam_client.user_token }, proxy: config.proxy)
-        resp_body = resp.body
-        logger.debug("ET < Case worker search by reference - #{resp_body}")
+        url = "#{config.gateway_api_url}/aggregated#{path}"
+        resp = get_request(url, log_subject: 'Caseworker search by reference', extra_headers: { content_type: 'application/json', accept: 'application/json' }, cookies: { accessToken: ui_idam_client.user_token })
         unless config.document_store_url_rewrite == false
-          resp_body = reverse_rewrite_document_store_urls(resp_body)
+          resp = reverse_rewrite_document_store_urls(resp)
         end
-        JSON.parse(resp_body)["results"]
-      rescue RestClient::Exception => e
-        logger.debug "ET < Case worker search by reference (ERROR) - #{e&.response&.body}"
-        raise Exceptions::Base.raise_exception(e)
+        resp["results"]
       end
     end
 
@@ -65,18 +61,12 @@ module EtCcdClient
       logger.tagged('EtCcdClient::UiClient') do
         tpl = Addressable::Template.new(config.cases_path)
         path = tpl.expand(uid: ui_idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.ethosCaseReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
-        url = "#{remote_config.api_url}#{path}"
-        logger.debug("ET > Caseworker search by ethos case reference (#{url})")
-        resp = RestClient::Request.execute(method: :get, url: url, headers: { content_type: 'application/json', accept: 'application/json' }, cookies: { accessToken: ui_idam_client.user_token }, proxy: config.proxy)
-        resp_body = resp.body
-        logger.debug("ET < Case worker search by ethos case reference - #{resp_body}")
+        url = "#{config.gateway_api_url}/aggregated#{path}"
+        resp = get_request(url, log_subject: 'Caseworker search by ethos case reference', extra_headers: { content_type: 'application/json', accept: 'application/json' }, cookies: { accessToken: ui_idam_client.user_token })
         unless config.document_store_url_rewrite == false
-          resp_body = reverse_rewrite_document_store_urls(resp_body)
+          resp = reverse_rewrite_document_store_urls(resp)
         end
-        JSON.parse(resp_body)["results"]
-      rescue RestClient::Exception => e
-        logger.debug "ET < Case worker search by ethos case reference (ERROR) - #{e.response.body}"
-        raise Exceptions::Base.raise_exception(e)
+        resp["results"]
       end
     end
 
@@ -100,14 +90,9 @@ module EtCcdClient
       logger.tagged('EtCcdClient::UiClient') do
         tpl = Addressable::Template.new(config.cases_path)
         path = tpl.expand(uid: ui_idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.multipleReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
-        url = "#{remote_config.api_url}#{path}"
-        logger.debug("ET > Caseworker search by multiple reference (#{url})")
-        resp = RestClient::Request.execute(method: :get, url: url, headers: { content_type: 'application/json', accept: 'application/json' }, cookies: { accessToken: ui_idam_client.user_token }, proxy: config.proxy)
-        logger.debug("ET < Case worker search by multiple reference - #{resp.body}")
-        JSON.parse(resp.body)["results"]
-      rescue RestClient::Exception => e
-        logger.debug "ET < Case worker search by multiple reference (ERROR) - #{e.response.body}"
-        raise Exceptions::Base.raise_exception(e)
+        url = "#{config.gateway_api_url}/aggregated#{path}"
+        resp = get_request(url, log_subject: 'Case worker search by multiple reference', extra_headers: { content_type: 'application/json', accept: 'application/json' }, cookies: { accessToken: ui_idam_client.user_token })
+        resp["results"]
       end
     end
 
@@ -124,10 +109,9 @@ module EtCcdClient
 
     attr_accessor :ui_idam_client, :config, :remote_config, :logger
 
-    def reverse_rewrite_document_store_urls(body)
+    def reverse_rewrite_document_store_urls(json)
       source_host, source_port, dest_host, dest_port = config.document_store_url_rewrite
-      body.gsub(/(https?):\/\/#{dest_host}:#{dest_port}/, "\\1://#{source_host}:#{source_port}")
+      JSON.parse(JSON.generate(json).gsub(/(https?):\/\/#{dest_host}:#{dest_port}/, "\\1://#{source_host}:#{source_port}"))
     end
-
   end
 end

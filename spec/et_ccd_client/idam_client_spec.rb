@@ -58,7 +58,7 @@ RSpec.describe EtCcdClient::IdamClient do
         { body: "myservicetoken" }
       end
       stub_request(:post, "http://idam.mock.com/loginUser").with(body: { 'username': 'm@m.com', password: 'p' }).to_return(body: mock_positive_response)
-      stub_request(:get, "http://idam.mock.com/details").with(headers: { 'Accept' => 'application/json' }).to_return(status: 200, body: user_details.to_json)
+      stub_request(:get, "http://idam.mock.com/details").with(headers: { 'Accept' => 'application/json', 'Authorization' => 'myusertoken' }).to_return(status: 200, body: user_details.to_json)
 
       # Act
       client.login(username: 'm@m.com', password: 'p')

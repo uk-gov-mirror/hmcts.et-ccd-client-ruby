@@ -5,7 +5,7 @@ module EtCcdClient
   class Config
     include Singleton
 
-    attr_accessor :auth_base_url, :idam_base_url, :data_store_base_url, :case_management_ui_base_url, :document_store_base_url, :document_store_url_rewrite
+    attr_accessor :auth_base_url, :idam_base_url, :data_store_base_url, :case_management_ui_base_url, :document_store_base_url, :gateway_api_url, :document_store_url_rewrite
     attr_accessor :user_role, :user_id
     attr_accessor :jurisdiction_id, :microservice, :microservice_secret
     attr_accessor :logger
@@ -72,6 +72,7 @@ module EtCcdClient
       self.document_store_url_rewrite = 'localhost:4506:dm-store:8080'
       self.case_management_ui_redirect_url = 'http://localhost:3451/oauth2redirect'
       self.case_management_ui_base_url = 'http://localhost:3451'
+      self.gateway_api_url = 'http://localhost:3453'
       self.user_id = 22
       self.user_role = 'caseworker,caseworker-test,caseworker-employment-tribunal-manchester,caseworker-employment,caseworker-employment-tribunal-manchester-caseofficer,caseworker-publiclaw-localAuthority'
       self.jurisdiction_id = 'EMPLOYMENT'
