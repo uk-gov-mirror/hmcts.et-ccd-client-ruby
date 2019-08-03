@@ -142,12 +142,13 @@ module EtCcdClient
     def download_from_remote_source(url)
       logger.tagged('EtCcdClient::Client') do
         logger.debug("ET > Download from remote source (#{url})")
-        resp = RestClient::Request.execute(method: :get, url: url, raw_response: true, verify_ssl: config.verify_ssl)
+        request = RestClient::Request.new(method: :get, url: url, raw_response: true, verify_ssl: config.verify_ssl)
+        resp = request.execute
         logger.debug("ET < Download from remote source (#{url}) complete.  Data not shown as very likely to be binary")
         resp
       rescue RestClient::Exception => e
         logger.debug "ET < Download from remote source (ERROR) - #{e.response}"
-        Exceptions::Base.raise_exception(e, url: url)
+        Exceptions::Base.raise_exception(e, url: url, request: request)
       end
     end
 
@@ -161,7 +162,8 @@ module EtCcdClient
           files: uploaded_file,
           classification: 'PUBLIC'
         }
-        resp = RestClient::Request.execute(method: :post, url: url, payload: data, headers: { 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}" }, verify_ssl: config.verify_ssl)
+        request = RestClient::Request.new(method: :post, url: url, payload: data, headers: { 'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}" }, verify_ssl: config.verify_ssl)
+        resp = request.execute
         resp_body = resp.body
         logger.debug "ET < Upload file from #{source_name} - #{resp_body}"
         unless config.document_store_url_rewrite == false
@@ -170,7 +172,7 @@ module EtCcdClient
         JSON.parse(resp_body)
       rescue RestClient::Exception => e
         logger.debug "ET < Upload file from #{source_name} (ERROR) - #{e.response.body}"
-        Exceptions::Base.raise_exception(e, url: url)
+        Exceptions::Base.raise_exception(e, url: url, request: request)
       end
     end
 
