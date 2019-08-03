@@ -4,6 +4,7 @@ require 'et_ccd_client/idam_client'
 require 'et_ccd_client/config'
 require 'et_ccd_client/exceptions'
 require 'et_ccd_client/common_rest_client'
+require 'et_ccd_client/common_rest_client_with_login'
 require 'json'
 require 'forwardable'
 require 'connection_pool'
@@ -12,6 +13,7 @@ module EtCcdClient
   class Client
     extend Forwardable
     include CommonRestClient
+    include CommonRestClientWithLogin
 
 
     def initialize(idam_client: nil, config: ::EtCcdClient.config)
@@ -41,7 +43,7 @@ module EtCcdClient
     def caseworker_start_case_creation(case_type_id:)
       logger.tagged('EtCcdClient::Client') do
         url = initiate_case_url(case_type_id, config.initiate_claim_event_id)
-        get_request(url, log_subject: 'Start case creation', extra_headers: headers_from_idam_client)
+        get_request_with_login(url, log_subject: 'Start case creation', extra_headers: headers_from_idam_client)
       end
     end
 
@@ -52,7 +54,7 @@ module EtCcdClient
     def caseworker_start_bulk_creation(case_type_id:)
       logger.tagged('EtCcdClient::Client') do
         url = initiate_case_url(case_type_id, config.initiate_bulk_event_id)
-        get_request(url, log_subject: 'Start bulk creation', extra_headers: headers_from_idam_client)
+        get_request_with_login(url, log_subject: 'Start bulk creation', extra_headers: headers_from_idam_client)
       end
     end
 
@@ -64,7 +66,7 @@ module EtCcdClient
       logger.tagged('EtCcdClient::Client') do
         tpl = Addressable::Template.new(config.create_case_url)
         url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id).to_s
-        post_request(url, data, log_subject: 'Case worker create case', extra_headers: headers_from_idam_client)
+        post_request_with_login(url, data, log_subject: 'Case worker create case', extra_headers: headers_from_idam_client)
       end
     end
 
@@ -79,7 +81,7 @@ module EtCcdClient
       logger.tagged('EtCcdClient::Client') do
         tpl = Addressable::Template.new(config.cases_url)
         url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.feeGroupReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
-        get_request(url, log_subject: 'Caseworker search by reference', extra_headers: headers_from_idam_client)
+        get_request_with_login(url, log_subject: 'Caseworker search by reference', extra_headers: headers_from_idam_client)
       end
     end
 
@@ -103,7 +105,7 @@ module EtCcdClient
       logger.tagged('EtCcdClient::Client') do
         tpl = Addressable::Template.new(config.cases_url)
         url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.multipleReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
-        get_request(url, log_subject: 'Caseworker search by multiple reference', extra_headers: headers_from_idam_client)
+        get_request_with_login(url, log_subject: 'Caseworker search by multiple reference', extra_headers: headers_from_idam_client)
       end
     end
 
@@ -120,21 +122,25 @@ module EtCcdClient
       logger.tagged('EtCcdClient::Client') do
         tpl = Addressable::Template.new(config.cases_pagination_metadata_url)
         url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: query).to_s
-        get_request(url, log_subject: 'Caseworker cases pagination metadata', extra_headers: headers_from_idam_client)
+        get_request_with_login(url, log_subject: 'Caseworker cases pagination metadata', extra_headers: headers_from_idam_client)
       end
     end
 
     # @param [String] filename The full path to the file to upload
     # @return [Hash] The object returned by the server
     def upload_file_from_filename(filename, content_type:)
-      upload_file_from_source(filename, content_type: content_type, source_name: :filename, source: filename)
+      login_on_forbidden do
+        upload_file_from_source(filename, content_type: content_type, source_name: :filename, source: filename)
+      end
     end
 
     # @param [String] url The url of the file to upload
     # @return [Hash] The object returned by the server
     def upload_file_from_url(url, content_type:, original_filename: File.basename(url))
       resp = download_from_remote_source(url)
-      upload_file_from_source(resp.file.path, content_type: content_type, source_name: :url, source: url, original_filename: original_filename)
+      login_on_forbidden do
+        upload_file_from_source(resp.file.path, content_type: content_type, source_name: :url, source: url, original_filename: original_filename)
+      end
     end
 
     private

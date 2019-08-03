@@ -151,6 +151,11 @@ RSpec.describe EtCcdClient::Client do
       let(:url) { "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiateevent/token" }
       let(:action) { -> { client.caseworker_start_case_creation(case_type_id: 'mycasetypeid') } }
     end
+
+    it_behaves_like "common GET auto login examples" do
+      let(:url) { "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiateevent/token" }
+      let(:action) { -> { client.caseworker_start_case_creation(case_type_id: 'mycasetypeid') } }
+    end
   end
   describe "#caseworker_start_bulk_creation" do
     it "performs the correct http request" do
@@ -186,6 +191,12 @@ RSpec.describe EtCcdClient::Client do
       let(:url) { "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiatebulkevent/token" }
       let(:action) { -> { client.caseworker_start_bulk_creation(case_type_id: 'mycasetypeid') } }
     end
+
+    it_behaves_like "common GET auto login examples" do
+      let(:url) { "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/event-triggers/mockinitiatebulkevent/token" }
+      let(:action) { -> { client.caseworker_start_bulk_creation(case_type_id: 'mycasetypeid') } }
+    end
+
   end
 
   describe "#caseworker_case_create" do
@@ -220,6 +231,11 @@ RSpec.describe EtCcdClient::Client do
     end
 
     it_behaves_like "common POST exception handling examples" do
+      let(:url) { "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases" }
+      let(:action) { -> (data = {}) { client.caseworker_case_create(data, case_type_id: 'mycasetypeid') } }
+    end
+
+    it_behaves_like "common POST auto login examples" do
       let(:url) { "http://data.mock.com/caseworkers/mockuserid/jurisdictions/mockjid/case-types/mycasetypeid/cases" }
       let(:action) { -> (data = {}) { client.caseworker_case_create(data, case_type_id: 'mycasetypeid') } }
     end
@@ -456,6 +472,12 @@ RSpec.describe EtCcdClient::Client do
       # Assert
       expect(action).to raise_exception(EtCcdClient::Exceptions::Base, "404 Not Found - Not found ('http://documents.mock.com/documents')")
     end
+
+    it_behaves_like "common POST auto login examples" do
+      let(:url) { "http://documents.mock.com/documents" }
+      let(:action) { -> { client.upload_file_from_filename(File.absolute_path('../fixtures/et1.pdf', __dir__), content_type: 'application/pdf') } }
+    end
+
 
 
   end
