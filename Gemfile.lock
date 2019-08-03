@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    et_ccd_client (0.1.37)
+    et_ccd_client (0.1.38)
       addressable (~> 2.6)
       connection_pool (~> 2.2, >= 2.2.2)
       rest-client (~> 2.0, >= 2.0.2)

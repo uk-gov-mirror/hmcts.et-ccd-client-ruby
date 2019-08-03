@@ -31,7 +31,7 @@ module EtCcdClient
         message = if json.nil? || json == JSON::JSONError
           ''
         else
-          json['message'] || ''
+          json['message'] || json['error'] || ''
         end
         if url
           "#{original_exception.message} - #{message} ('#{url}')"
