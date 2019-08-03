@@ -42,7 +42,13 @@ module EtCcdClient
 
       private
 
-      attr_writer :original_exception, :url, :request
+      attr_writer :original_exception, :url
+
+      def request=(request)
+        @request = nil && return if request.nil?
+
+        @request = request.args
+      end
     end
   end
 end
