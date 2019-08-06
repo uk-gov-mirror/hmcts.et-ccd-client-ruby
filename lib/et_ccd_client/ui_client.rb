@@ -111,7 +111,7 @@ module EtCcdClient
 
     def reverse_rewrite_document_store_urls(json)
       source_host, source_port, dest_host, dest_port = config.document_store_url_rewrite
-      JSON.parse(JSON.generate(json).gsub(/(https?):\/\/#{dest_host}:#{dest_port}/, "\\1://#{source_host}:#{source_port}"))
+      JSON.parse(JSON.generate(json).gsub(/(https?):\/\/#{Regexp.quote dest_host}:#{Regexp.quote dest_port}/, "\\1://#{source_host}:#{source_port}"))
     end
   end
 end

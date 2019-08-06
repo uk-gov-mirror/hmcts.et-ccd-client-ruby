@@ -189,7 +189,7 @@ module EtCcdClient
 
     def rewrite_document_store_urls(body)
       source_host, source_port, dest_host, dest_port = config.document_store_url_rewrite
-      body.gsub(/(https?):\/\/#{source_host}:#{source_port}/, "\\1://#{dest_host}:#{dest_port}")
+      body.gsub(/(https?):\/\/#{Rexexp.quote source_host}:#{Regexp.quote source_port}/, "\\1://#{dest_host}:#{dest_port}")
     end
 
     def headers_from_idam_client
