@@ -18,6 +18,10 @@ module EtCcdClient
     def path
       @tempfile.path
     end
+
+    def to_s
+      inspect
+    end
     alias_method :local_path, :path
 
     def respond_to?(*args)
