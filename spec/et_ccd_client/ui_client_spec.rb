@@ -1,11 +1,10 @@
 require 'spec_helper'
 require 'et_ccd_client'
 RSpec.describe EtCcdClient::UiClient do
-  subject(:client) { described_class.new(ui_idam_client: mock_idam_client, config: mock_config, remote_config: mock_remote_config) }
+  subject(:client) { described_class.new(ui_idam_client: mock_idam_client, config: mock_config) }
 
   let(:mock_idam_client) { instance_spy(EtCcdClient::UiIdamClient, service_token: 'mockservicetoken', user_token: 'mockusertoken', user_details: { 'id' => 'mockuserid', 'roles' => ['mockrole1', 'mockrole2'] }, login: nil) }
   let(:mock_config) { instance_double(EtCcdClient::Config, mock_config_values) }
-  let(:mock_remote_config) { instance_double(EtCcdClient::UiRemoteConfig, mock_remote_config_values) }
   let(:mock_config_values) do
     {
       auth_base_url: 'http://auth.mock.com',
@@ -29,11 +28,6 @@ RSpec.describe EtCcdClient::UiClient do
       proxy: false
     }
   end
-  let(:mock_remote_config_values) do
-    {
-      api_url: 'http://data.mock.com'
-    }
-  end
   let(:mock_logger) do
     instance_spy('ActiveSupport::Logger').tap do |spy|
       allow(spy).to receive(:tagged) do |_arg1, &block|
@@ -47,7 +41,6 @@ RSpec.describe EtCcdClient::UiClient do
     it 'has correct default values for injected services' do
       class_double('::EtCcdClient::UiIdamClient', new: mock_idam_client).as_stubbed_const
       expect(::EtCcdClient).to receive(:config).and_return(mock_config)
-      expect(::EtCcdClient).to receive(:ui_remote_config).and_return(mock_remote_config)
 
       described_class.new
     end

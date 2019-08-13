@@ -12,10 +12,9 @@ module EtCcdClient
     extend Forwardable
     include CommonRestClient
 
-    def initialize(ui_idam_client: UiIdamClient.new, config: ::EtCcdClient.config, remote_config: ::EtCcdClient.ui_remote_config)
+    def initialize(ui_idam_client: UiIdamClient.new, config: ::EtCcdClient.config)
       self.ui_idam_client = ui_idam_client
       self.config = config
-      self.remote_config = remote_config
       self.logger = config.logger
     end
 
@@ -107,7 +106,7 @@ module EtCcdClient
 
     private
 
-    attr_accessor :ui_idam_client, :config, :remote_config, :logger
+    attr_accessor :ui_idam_client, :config, :logger
 
     def reverse_rewrite_document_store_urls(json)
       source_host, source_port, dest_host, dest_port = config.document_store_url_rewrite
