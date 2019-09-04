@@ -180,7 +180,7 @@ module EtCcdClient
           event_token: event_token,
           ignore_warning: false
         }.to_json
-        post_request_with_login(url, payload, log_subject: 'Caseworker update documents')
+        post_request_with_login(url, payload, log_subject: 'Caseworker update documents', extra_headers: headers_from_idam_client)
       end
     end
 
