@@ -50,6 +50,10 @@ module EtCcdClient
       'createBulkAction'
     end
 
+    def initiate_document_upload_event_id
+      'uploadDocument'
+    end
+
     def case_management_ui_config_url
       "#{case_management_ui_base_url}/config"
     end
