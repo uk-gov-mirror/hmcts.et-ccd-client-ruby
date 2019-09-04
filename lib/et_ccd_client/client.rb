@@ -164,7 +164,7 @@ module EtCcdClient
       end
     end
 
-    def caseworker_update_case_documents(event_token:, files:, case_id:)
+    def caseworker_update_case_documents(event_token:, files:, case_id:, case_type_id:)
       tpl = Addressable::Template.new(config.case_events_url)
       url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, cid: case_id).to_s
       logger.tagged('EtCcdClient::Client') do
