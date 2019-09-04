@@ -1,3 +1,3 @@
 module EtCcdClient
-  VERSION = "0.1.46".freeze
+  VERSION = "0.1.47".freeze
 end

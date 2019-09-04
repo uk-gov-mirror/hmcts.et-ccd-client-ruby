@@ -164,6 +164,26 @@ module EtCcdClient
       end
     end
 
+    def caseworker_update_case_documents(event_token:, files:, case_id:)
+      tpl = Addressable::Template.new(config.case_events_url)
+      url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, cid: case_id).to_s
+      logger.tagged('EtCcdClient::Client') do
+        payload = {
+          data: {
+            documentCollection: files
+          },
+          event: {
+            id: 'uploadDocument',
+            summary: '',
+            description: ''
+          },
+          event_token: event_token,
+          ignore_warning: false
+        }.to_json
+        post_request_with_login(url, payload, log_subject: 'Caseworker update documents')
+      end
+    end
+
     # @param [String] filename The full path to the file to upload
     # @return [Hash] The object returned by the server
     def upload_file_from_filename(filename, content_type:)

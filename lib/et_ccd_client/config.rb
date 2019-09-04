@@ -38,6 +38,10 @@ module EtCcdClient
       "#{data_store_base_url}/caseworkers/{uid}/jurisdictions/{jid}/case-types/{ctid}/event-triggers/{etid}/token"
     end
 
+    def case_events_url
+      "#{data_store_base_url}/caseworkers/{uid}/jurisdictions/{jid}/case-types/{ctid}/cases/{cid}/events"
+    end
+
     def upload_file_url
       "#{document_store_base_url}/documents"
     end
