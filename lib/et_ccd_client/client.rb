@@ -118,6 +118,35 @@ module EtCcdClient
       results.first
     end
 
+    # Search for cases by ethos case reference - useful for testing
+    # @param [String] reference The ethos case reference number to search for
+    # @param [String] case_type_id The case type ID to set the search scope to
+    # @param [Integer] page - The page number to fetch
+    # @param [String] sort_direction (defaults to 'desc') - Change to 'asc' to do oldest first
+    #
+    # @return [Array<Hash>] The json response from the server
+    def caseworker_search_by_ethos_case_reference(reference, case_type_id:, page: 1, sort_direction: 'desc')
+      logger.tagged('EtCcdClient::Client') do
+        tpl = Addressable::Template.new(config.cases_url)
+        url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.ethosCaseReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
+        resp = get_request_with_login(url, log_subject: 'Caseworker search by ethos case reference', extra_headers: headers_from_idam_client)
+        unless config.document_store_url_rewrite == false
+          resp = reverse_rewrite_document_store_urls(resp)
+        end
+        resp
+      end
+    end
+
+    # Search for the latest case matching the ethos case reference.  Useful for testing
+    # @param [String] reference The ethos case reference number to search for
+    # @param [String] case_type_id The case type ID to set the search scope to
+    # @return [Hash] The case object returned from the server
+    def caseworker_search_latest_by_ethos_case_reference(reference, case_type_id:)
+      results = caseworker_search_by_ethos_case_reference(reference, case_type_id: case_type_id, page: 1, sort_direction: 'desc')
+      results.first
+    end
+
+
     def caseworker_cases_pagination_metadata(case_type_id:, query: {})
       logger.tagged('EtCcdClient::Client') do
         tpl = Addressable::Template.new(config.cases_pagination_metadata_url)
@@ -194,6 +223,11 @@ module EtCcdClient
 
     def headers_from_idam_client
       {'ServiceAuthorization' => "Bearer #{idam_client.service_token}", :authorization => "Bearer #{idam_client.user_token}", 'user-id' => idam_client.user_details['id'], 'user-roles' => idam_client.user_details['roles'].join(',')}
+    end
+
+    def reverse_rewrite_document_store_urls(json)
+      source_host, source_port, dest_host, dest_port = config.document_store_url_rewrite
+      JSON.parse(JSON.generate(json).gsub(/(https?):\/\/#{Regexp.quote dest_host}:#{Regexp.quote dest_port}/, "\\1://#{source_host}:#{source_port}"))
     end
 
     attr_accessor :idam_client, :config, :logger
