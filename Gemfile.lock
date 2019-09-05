@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    et_ccd_client (0.1.48)
+    et_ccd_client (0.1.50)
       addressable (~> 2.6)
       connection_pool (~> 2.2, >= 2.2.2)
       rest-client (~> 2.0, >= 2.0.2)
@@ -25,9 +25,9 @@ GEM
     http-cookie (1.0.3)
       domain_name (~> 0.5)
     jaro_winkler (1.5.3)
-    mime-types (3.2.2)
+    mime-types (3.3)
       mime-types-data (~> 3.2015)
-    mime-types-data (3.2019.0331)
+    mime-types-data (3.2019.0904)
     netrc (0.11.0)
     parallel (1.17.0)
     parser (2.6.3.0)
@@ -71,7 +71,7 @@ GEM
       unf_ext
     unf_ext (0.0.7.6)
     unicode-display_width (1.6.0)
-    webmock (3.7.1)
+    webmock (3.7.2)
       addressable (>= 2.3.6)
       crack (>= 0.3.2)
       hashdiff (>= 0.4.0, < 2.0.0)
