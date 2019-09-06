@@ -2,7 +2,8 @@ module EtCcdClient
   module CommonRestClient
     def get_request(url, log_subject:, extra_headers: {}, decode: true, cookies: {})
       logger.debug("ET > #{log_subject} (#{url})")
-      req = RestClient::Request.new(method: :get, url: url, headers: { content_type: 'application/json' }.merge(extra_headers), cookies: cookies, verify_ssl: config.verify_ssl)
+      proxy = config.proxy.blank? ? nil : "http://#{config.proxy}"
+      req = RestClient::Request.new(method: :get, url: url, headers: { content_type: 'application/json' }.merge(extra_headers), cookies: cookies, verify_ssl: config.verify_ssl, proxy: proxy)
       resp = req.execute
       logger.debug "ET < #{log_subject} - #{resp.body}"
       decode ? JSON.parse(resp.body) : resp.body
@@ -13,7 +14,8 @@ module EtCcdClient
 
     def post_request(url, data, log_subject:, extra_headers: {}, decode: true, cookies: {})
       logger.debug("ET > #{log_subject} (#{url}) - #{data.to_json}")
-      req = RestClient::Request.new(method: :post, url: url, payload: data, headers: { content_type: 'application/json' }.merge(extra_headers), cookies: cookies, verify_ssl: config.verify_ssl)
+      proxy = config.proxy.blank? ? nil : "http://#{config.proxy}"
+      req = RestClient::Request.new(method: :post, url: url, payload: data, headers: { content_type: 'application/json' }.merge(extra_headers), cookies: cookies, verify_ssl: config.verify_ssl, proxy: proxy)
       resp = req.execute
       logger.debug "ET < #{log_subject} - #{resp.body}"
       decode ? JSON.parse(resp.body) : resp.body

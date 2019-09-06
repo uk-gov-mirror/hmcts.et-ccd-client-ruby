@@ -59,11 +59,12 @@ module EtCcdClient
     end
 
     # Initiate a document upload
-    # @param [String] case_type_id
+    # @param [String] ctid
+    # @param [String] cid
     #
     # @return [Hash] The json response
-    def caseworker_start_upload_document(case_type_id:)
-      url = initiate_document_upload_url(case_type_id)
+    def caseworker_start_upload_document(ctid:, cid:)
+      url = initiate_document_upload_url(ctid, cid)
       get_request_with_login(url, log_subject: 'Start upload document', extra_headers: headers_from_idam_client)
     end
 
@@ -245,9 +246,9 @@ module EtCcdClient
       tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, etid: event_id).to_s
     end
 
-    def initiate_document_upload_url(case_type_id)
-      tpl = Addressable::Template.new(config.initiate_case_url)
-      tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, etid: config.initiate_document_upload_event_id).to_s
+    def initiate_document_upload_url(case_type_id, cid)
+      tpl = Addressable::Template.new(config.initiate_document_upload_url)
+      tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, cid: cid).to_s
     end
 
     def rewrite_document_store_urls(body)

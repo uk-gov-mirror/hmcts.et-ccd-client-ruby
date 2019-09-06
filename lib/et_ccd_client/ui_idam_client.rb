@@ -3,6 +3,7 @@ require "addressable/uri"
 require 'et_ccd_client/config'
 module EtCcdClient
   class UiIdamClient
+    include CommonRestClient
     attr_reader :service_token, :user_token, :user_details
 
     def initialize(config: ::EtCcdClient.config)
@@ -25,20 +26,14 @@ module EtCcdClient
 
     def exchange_sidam_user_token(username, password)
       url = "#{config.idam_base_url}/loginUser"
-      logger.debug("ET > IdamUI user token exchange (#{url}) - username: #{username} password: '******'")
-      resp = RestClient::Request.execute(method: :post, url: url, payload: {username: username, password: password}, headers: { content_type: 'application/x-www-form-urlencoded', accept: 'application/json' }, verify_ssl: config.verify_ssl)
-      token = JSON.parse(resp.body)['access_token']
-      logger.debug "ET < IdamUI user token exchange - #{token}"
+      resp = post_request(url, {username: username, password: password}, extra_headers: { content_type: 'application/x-www-form-urlencoded', accept: 'application/json' }, log_subject: "IdamUI user token exchange")
+      token = resp['access_token']
       token
     end
 
     def get_user_details
       url = "#{config.idam_base_url}/details"
-      logger.debug("ET > UiIdam get user details (#{url})")
-      resp = RestClient::Request.execute(method: :get, url: url, headers: { 'Accept' => 'application/json', 'Authorization' => user_token }, verify_ssl: config.verify_ssl)
-      resp_body = resp.body
-      logger.debug "ET < UiIdam get user details : #{resp_body}"
-      JSON.parse(resp_body)
+      get_request(url, extra_headers: { 'Accept' => 'application/json', 'Authorization' => user_token }, log_subject: "UiIdam get user details")
     end
   end
 end
