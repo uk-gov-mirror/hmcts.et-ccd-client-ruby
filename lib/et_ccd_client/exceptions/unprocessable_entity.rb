@@ -3,7 +3,7 @@ module EtCcdClient
     class UnprocessableEntity < Base
       def to_s
         json = JSON.parse(response.body) rescue JSON::JSONError
-        return super if json.nil?
+        return super if json.nil? || json == JSON::JSONError
 
         field_errors = json.dig('details', 'field_errors')&.map do |field_error|
           "#{field_error['id']} => #{field_error['message']}"
