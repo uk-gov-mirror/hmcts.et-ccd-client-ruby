@@ -8,7 +8,7 @@ module EtCcdClient
       logger.debug "ET < #{log_subject} - #{resp.body}"
       decode ? JSON.parse(resp.body) : resp.body
     rescue RestClient::Exception => e
-      logger.debug "ET < #{log_subject} (ERROR) - #{e.response.body}"
+      logger.debug "ET < #{log_subject} (ERROR) - #{e.response&.body}"
       Exceptions::Base.raise_exception(e, url: url, request: req)
     end
 
@@ -20,7 +20,7 @@ module EtCcdClient
       logger.debug "ET < #{log_subject} - #{resp.body}"
       decode ? JSON.parse(resp.body) : resp.body
     rescue RestClient::Exception => e
-      logger.debug "ET < #{log_subject} (ERROR) - #{e.response.body}"
+      logger.debug "ET < #{log_subject} (ERROR) - #{e.response&.body}"
       Exceptions::Base.raise_exception(e, url: url, request: req)
     end
   end
