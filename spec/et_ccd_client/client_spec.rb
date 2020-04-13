@@ -251,10 +251,20 @@ RSpec.describe EtCcdClient::Client do
         'multipleRefNumber' => '2111111/2019'
       }
     end
+    let(:expected_body) do
+      {
+        'case_details' => a_hash_including(
+          'case_data' => a_hash_including(
+            'caseRefNumberCount' => '100'
+          )
+        ),
+        'case_type_id' => 'mycasetypeid'
+      }
+    end
     it "performs the correct http request" do
       # Arrange - stub the url
       stub = stub_request(:post, mock_config_values[:start_multiple_url]).
-        with(headers: { "Content-Type": "application/json" }).
+        with(headers: { "Content-Type": "application/json" }, body: hash_including(expected_body)).
         to_return(body: response_data.to_json, headers: default_response_headers, status: 200)
 
       # Act - Call the method

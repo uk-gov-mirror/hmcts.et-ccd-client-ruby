@@ -136,7 +136,9 @@ module EtCcdClient
         url = config.start_multiple_url
         payload = {
           case_details: {
-            caseRefNumberCount: quantity.to_s
+            case_data: {
+              caseRefNumberCount: quantity.to_s
+            }
           },
           case_type_id: case_type_id
         }
