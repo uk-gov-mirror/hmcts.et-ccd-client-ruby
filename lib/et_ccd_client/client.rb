@@ -138,9 +138,9 @@ module EtCcdClient
           case_details: {
             case_data: {
               caseRefNumberCount: quantity.to_s
-            }
-          },
-          case_type_id: case_type_id
+            },
+            case_type_id: case_type_id
+          }
         }
         post_request_with_login(url, payload.to_json, log_subject: 'Start multiple', extra_headers: headers_from_idam_client)
       end

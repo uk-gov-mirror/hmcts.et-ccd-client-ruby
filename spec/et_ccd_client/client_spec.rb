@@ -256,9 +256,9 @@ RSpec.describe EtCcdClient::Client do
         'case_details' => a_hash_including(
           'case_data' => a_hash_including(
             'caseRefNumberCount' => '100'
-          )
-        ),
-        'case_type_id' => 'mycasetypeid'
+          ),
+          'case_type_id' => 'mycasetypeid'
+        )
       }
     end
     it "performs the correct http request" do
