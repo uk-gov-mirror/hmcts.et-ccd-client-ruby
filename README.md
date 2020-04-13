@@ -57,6 +57,7 @@ EtCcdClient.config do |c|
     c.data_store_base_url = <value>
     c.document_store_base_url = <value>
     c.document_store_url_rewrite = <false OR 4 element array containing source_host, source_port, dest_host, dest_port for rewriting - used in docker environment only>
+    c.ecm_base_url = <value> (This is the ECM service known as docmosis but it is much more than that)
     c.jurisdiction_id = <value>
     c.microservice = <value>
     c.microservice_secret = <value>

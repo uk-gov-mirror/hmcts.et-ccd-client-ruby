@@ -13,6 +13,8 @@ RSpec.describe EtCcdClient::Client do
       auth_base_url: 'http://auth.mock.com',
       idam_base_url: 'http://idam.mock.com',
       data_store_base_url: 'http://data.mock.com',
+      ecm_base_url: 'http://ecm.mock.com',
+      start_multiple_url: 'http://ecm.mock.com/startMultiple',
       document_store_base_url: 'http://documents.mock.com',
       document_store_url_rewrite: false,
       jurisdiction_id: 'mockjid',
@@ -241,6 +243,46 @@ RSpec.describe EtCcdClient::Client do
     end
   end
 
+  describe '#start_multiple' do
+    let(:response_data) do
+      {
+        'caseRefNumberCount' => 100,
+        'startCaseRefNumber' => '2100001/2019',
+        'multipleRefNumber' => '2111111/2019'
+      }
+    end
+    it "performs the correct http request" do
+      # Arrange - stub the url
+      stub = stub_request(:post, mock_config_values[:start_multiple_url]).
+        with(headers: { "Content-Type": "application/json" }).
+        to_return(body: response_data.to_json, headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      client.start_multiple(case_type_id: 'mycasetypeid', quantity: 100)
+
+      # Assert
+      expect(stub).to have_been_requested
+    end
+
+    it "returns the correct json" do
+      # Arrange - stub the url
+      stub_request(:post, mock_config_values[:start_multiple_url]).
+        with(headers: { "Content-Type": "application/json" }).
+        to_return(body: response_data.to_json, headers: default_response_headers, status: 200)
+
+      # Act - Call the method
+      result = client.start_multiple(case_type_id: 'mycasetypeid', quantity: 100)
+
+      # Assert
+      expect(result).to eql response_data
+    end
+
+    it_behaves_like "common POST auto login examples" do
+      let(:url) { mock_config_values[:start_multiple_url] }
+      let(:action) { -> (data = {}) { client.start_multiple(case_type_id: 'mycasetypeid', quantity: 100) } }
+    end
+
+  end
   describe "#caseworker_search_by_reference" do
 
   end

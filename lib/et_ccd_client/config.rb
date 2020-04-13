@@ -5,7 +5,7 @@ module EtCcdClient
   class Config
     include Singleton
 
-    attr_accessor :auth_base_url, :idam_base_url, :data_store_base_url, :case_management_ui_base_url, :document_store_base_url, :gateway_api_url, :document_store_url_rewrite
+    attr_accessor :auth_base_url, :idam_base_url, :data_store_base_url, :ecm_base_url, :case_management_ui_base_url, :document_store_base_url, :gateway_api_url, :document_store_url_rewrite
     attr_accessor :user_role, :user_id
     attr_accessor :jurisdiction_id, :microservice, :microservice_secret
     attr_accessor :logger
@@ -50,6 +50,10 @@ module EtCcdClient
       "#{document_store_base_url}/documents"
     end
 
+    def start_multiple_url
+      "#{ecm_base_url}/startMultiple"
+    end
+
     def initiate_claim_event_id
       'initiateCase'
     end
@@ -81,6 +85,7 @@ module EtCcdClient
       self.idam_base_url =  'http://localhost:4501'
       self.data_store_base_url = 'http://localhost:4452'
       self.document_store_base_url = 'http://localhost:4506'
+      self.ecm_base_url = 'http://unknown:4506'
       self.document_store_url_rewrite = 'localhost:4506:dm-store:8080'
       self.case_management_ui_redirect_url = 'http://localhost:3451/oauth2redirect'
       self.case_management_ui_base_url = 'http://localhost:3451'

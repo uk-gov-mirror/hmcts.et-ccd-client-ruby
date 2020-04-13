@@ -128,6 +128,22 @@ module EtCcdClient
       results.first
     end
 
+    # @param [String] case_type_id
+    # @param [Integer] quantity
+    # @return [Hash] The json response from the server
+    def start_multiple(case_type_id:, quantity:)
+      logger.tagged('EtCcdClient::Client') do
+        url = config.start_multiple_url
+        payload = {
+          case_details: {
+            caseRefNumberCount: quantity.to_s
+          },
+          case_type_id: case_type_id
+        }
+        post_request_with_login(url, payload.to_json, log_subject: 'Start multiple', extra_headers: headers_from_idam_client)
+      end
+    end
+
     # Search for cases by ethos case reference - useful for testing
     # @param [String] reference The ethos case reference number to search for
     # @param [String] case_type_id The case type ID to set the search scope to
@@ -265,6 +281,9 @@ module EtCcdClient
       JSON.parse(JSON.generate(json).gsub(/(https?):\/\/#{Regexp.quote dest_host}:#{Regexp.quote dest_port}/, "\\1://#{source_host}:#{source_port}"))
     end
 
-    attr_accessor :idam_client, :config, :logger
+    attr_accessor :idam_client, :logger
+
+    # @return [EtCcdClient::Config] The configuration
+    attr_accessor :config
   end
 end

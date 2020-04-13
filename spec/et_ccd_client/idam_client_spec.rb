@@ -25,7 +25,8 @@ RSpec.describe EtCcdClient::IdamClient do
       sidam_username: 'm@m.com',
       sidam_password: 'p',
       verify_ssl: false,
-      user_details_url: "http://idam.mock.com/details"
+      user_details_url: "http://idam.mock.com/details",
+      proxy: false
     }
   end
   let(:mock_logger) do
