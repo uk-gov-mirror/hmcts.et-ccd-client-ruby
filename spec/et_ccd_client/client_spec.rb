@@ -14,7 +14,7 @@ RSpec.describe EtCcdClient::Client do
       idam_base_url: 'http://idam.mock.com',
       data_store_base_url: 'http://data.mock.com',
       ecm_base_url: 'http://ecm.mock.com',
-      start_multiple_url: 'http://ecm.mock.com/startMultiple',
+      start_multiple_url: 'http://ecm.mock.com/generateCaseRefNumbers',
       document_store_base_url: 'http://documents.mock.com',
       document_store_url_rewrite: false,
       jurisdiction_id: 'mockjid',

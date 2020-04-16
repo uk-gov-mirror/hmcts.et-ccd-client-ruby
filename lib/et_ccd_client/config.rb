@@ -51,7 +51,7 @@ module EtCcdClient
     end
 
     def start_multiple_url
-      "#{ecm_base_url}/startMultiple"
+      "#{ecm_base_url}/generateCaseRefNumbers"
     end
 
     def initiate_claim_event_id
