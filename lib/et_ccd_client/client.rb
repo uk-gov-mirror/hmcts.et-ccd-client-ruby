@@ -206,7 +206,7 @@ module EtCcdClient
     # @param [String] filename The full path to the file to upload
     # @return [Hash] The object returned by the server
     def upload_file_from_filename(filename, content_type:)
-      login_on_forbidden do
+      login_on_denial do
         upload_file_from_source(filename, content_type: content_type, source_name: :filename, source: filename)
       end
     end
@@ -215,7 +215,7 @@ module EtCcdClient
     # @return [Hash] The object returned by the server
     def upload_file_from_url(url, content_type:, original_filename: File.basename(url))
       resp = download_from_remote_source(url)
-      login_on_forbidden do
+      login_on_denial do
         upload_file_from_source(resp.file.path, content_type: content_type, source_name: :url, source: url, original_filename: original_filename)
       end
     end
