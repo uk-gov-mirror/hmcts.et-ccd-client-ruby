@@ -59,7 +59,7 @@ module EtCcdClient
     end
 
     def initiate_bulk_event_id
-      'createBulkAction'
+      'createMultiple'
     end
 
     def initiate_document_upload_event_id
