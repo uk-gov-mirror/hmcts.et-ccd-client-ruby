@@ -114,7 +114,7 @@ module EtCcdClient
     def caseworker_search_by_bulk_case_title(case_title, case_type_id:, page: 1, sort_direction: 'desc')
       logger.tagged('EtCcdClient::UiClient') do
         tpl = Addressable::Template.new(config.cases_path)
-        path = tpl.expand(uid: ui_idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.bulkCaseTitle' => case_title, page: page, 'sortDirection' => sort_direction }).to_s
+        path = tpl.expand(uid: ui_idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.multipleName' => case_title, page: page, 'sortDirection' => sort_direction }).to_s
         url = "#{config.gateway_api_url}/aggregated#{path}"
         resp = get_request(url, log_subject: 'Case worker search by bulk case title', extra_headers: { content_type: 'application/json', accept: 'application/json' }, cookies: { accessToken: ui_idam_client.user_token })
         resp["results"]
