@@ -1,11 +1,11 @@
 PATH
   remote: .
   specs:
-    et_ccd_client (0.3.1)
+    et_ccd_client (0.3.2)
       addressable (~> 2.6)
       connection_pool (~> 2.2, >= 2.2.2)
       rest-client (~> 2.0, >= 2.0.2)
-      rotp (~> 6.0)
+      rotp (~> 6.2)
       webmock (~> 3.6)
 
 GEM
