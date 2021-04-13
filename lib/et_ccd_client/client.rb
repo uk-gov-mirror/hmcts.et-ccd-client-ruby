@@ -40,10 +40,10 @@ module EtCcdClient
     # @param [String] case_type_id
     #
     # @return [Hash] The json response
-    def caseworker_start_case_creation(case_type_id:)
+    def caseworker_start_case_creation(case_type_id:, extra_headers: {})
       logger.tagged('EtCcdClient::Client') do
         url = initiate_case_url(case_type_id, config.initiate_claim_event_id)
-        get_request_with_login(url, log_subject: 'Start case creation', extra_headers: headers_from_idam_client)
+        get_request_with_login(url, log_subject: 'Start case creation', extra_headers: extra_headers.merge(headers_from_idam_client))
       end
     end
 
@@ -51,10 +51,10 @@ module EtCcdClient
     # @param [String] case_type_id
     #
     # @return [Hash] The json response
-    def caseworker_start_bulk_creation(case_type_id:)
+    def caseworker_start_bulk_creation(case_type_id:, extra_headers: {})
       logger.tagged('EtCcdClient::Client') do
         url = initiate_case_url(case_type_id, config.initiate_bulk_event_id)
-        get_request_with_login(url, log_subject: 'Start bulk creation', extra_headers: headers_from_idam_client)
+        get_request_with_login(url, log_subject: 'Start bulk creation', extra_headers: extra_headers.merge(headers_from_idam_client))
       end
     end
 
@@ -63,20 +63,20 @@ module EtCcdClient
     # @param [String] cid
     #
     # @return [Hash] The json response
-    def caseworker_start_upload_document(ctid:, cid:)
+    def caseworker_start_upload_document(ctid:, cid:, extra_headers: {})
       url = initiate_document_upload_url(ctid, cid)
-      get_request_with_login(url, log_subject: 'Start upload document', extra_headers: headers_from_idam_client)
+      get_request_with_login(url, log_subject: 'Start upload document', extra_headers: extra_headers.merge(headers_from_idam_client))
     end
 
     # @param [Hash] data
     # @param [String] case_type_id
     #
     # @return [Hash] The json response
-    def caseworker_case_create(data, case_type_id:)
+    def caseworker_case_create(data, case_type_id:, extra_headers: {})
       logger.tagged('EtCcdClient::Client') do
         tpl = Addressable::Template.new(config.create_case_url)
         url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id).to_s
-        post_request_with_login(url, data, log_subject: 'Case worker create case', extra_headers: headers_from_idam_client)
+        post_request_with_login(url, data, log_subject: 'Case worker create case', extra_headers: extra_headers.merge(headers_from_idam_client))
       end
     end
 
@@ -87,11 +87,11 @@ module EtCcdClient
     # @param [String] sort_direction (defaults to 'desc') - Change to 'asc' to do oldest first
     #
     # @return [Array<Hash>] The json response from the server
-    def caseworker_search_by_reference(reference, case_type_id:, page: 1, sort_direction: 'desc')
+    def caseworker_search_by_reference(reference, case_type_id:, page: 1, sort_direction: 'desc', extra_headers: {})
       logger.tagged('EtCcdClient::Client') do
         tpl = Addressable::Template.new(config.cases_url)
         url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.feeGroupReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
-        get_request_with_login(url, log_subject: 'Caseworker search by reference', extra_headers: headers_from_idam_client)
+        get_request_with_login(url, log_subject: 'Caseworker search by reference', extra_headers: extra_headers.merge(headers_from_idam_client))
       end
     end
 
@@ -99,8 +99,8 @@ module EtCcdClient
     # @param [String] reference The reference number to search for
     # @param [String] case_type_id The case type ID to set the search scope to
     # @return [Hash] The case object returned from the server
-    def caseworker_search_latest_by_reference(reference, case_type_id:)
-      results = caseworker_search_by_reference(reference, case_type_id: case_type_id, page: 1, sort_direction: 'desc')
+    def caseworker_search_latest_by_reference(reference, case_type_id:, extra_headers: {})
+      results = caseworker_search_by_reference(reference, case_type_id: case_type_id, page: 1, sort_direction: 'desc', extra_headers: extra_headers)
       results.first
     end
 
@@ -111,11 +111,11 @@ module EtCcdClient
     # @param [String] sort_direction (defaults to 'desc') - Change to 'asc' to do oldest first
     #
     # @return [Array<Hash>] The json response from the server
-    def caseworker_search_by_multiple_reference(reference, case_type_id:, page: 1, sort_direction: 'desc')
+    def caseworker_search_by_multiple_reference(reference, case_type_id:, page: 1, sort_direction: 'desc', extra_headers: {})
       logger.tagged('EtCcdClient::Client') do
         tpl = Addressable::Template.new(config.cases_url)
         url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.multipleReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
-        get_request_with_login(url, log_subject: 'Caseworker search by multiple reference', extra_headers: headers_from_idam_client)
+        get_request_with_login(url, log_subject: 'Caseworker search by multiple reference', extra_headers: extra_headers.merge(headers_from_idam_client))
       end
     end
 
@@ -123,15 +123,15 @@ module EtCcdClient
     # @param [String] reference The multiples reference number to search for
     # @param [String] case_type_id The case type ID to set the search scope to
     # @return [Hash] The case object returned from the server
-    def caseworker_search_latest_by_multiple_reference(reference, case_type_id:)
-      results = caseworker_search_by_multiple_reference(reference, case_type_id: case_type_id, page: 1, sort_direction: 'desc')
+    def caseworker_search_latest_by_multiple_reference(reference, case_type_id:, extra_headers: {})
+      results = caseworker_search_by_multiple_reference(reference, case_type_id: case_type_id, page: 1, sort_direction: 'desc', extra_headers: extra_headers)
       results.first
     end
 
     # @param [String] case_type_id
     # @param [Integer] quantity
     # @return [Hash] The json response from the server
-    def start_multiple(case_type_id:, quantity:)
+    def start_multiple(case_type_id:, quantity:, extra_headers: {})
       logger.tagged('EtCcdClient::Client') do
         url = config.start_multiple_url
         payload = {
@@ -142,7 +142,7 @@ module EtCcdClient
             case_type_id: case_type_id
           }
         }
-        post_request_with_login(url, payload.to_json, log_subject: 'Start multiple', extra_headers: headers_from_idam_client)
+        post_request_with_login(url, payload.to_json, log_subject: 'Start multiple', extra_headers: extra_headers.merge(headers_from_idam_client))
       end
     end
 
@@ -153,11 +153,11 @@ module EtCcdClient
     # @param [String] sort_direction (defaults to 'desc') - Change to 'asc' to do oldest first
     #
     # @return [Array<Hash>] The json response from the server
-    def caseworker_search_by_ethos_case_reference(reference, case_type_id:, page: 1, sort_direction: 'desc')
+    def caseworker_search_by_ethos_case_reference(reference, case_type_id:, page: 1, sort_direction: 'desc', extra_headers: {})
       logger.tagged('EtCcdClient::Client') do
         tpl = Addressable::Template.new(config.cases_url)
         url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: { 'case.ethosCaseReference' => reference, page: page, 'sortDirection' => sort_direction }).to_s
-        resp = get_request_with_login(url, log_subject: 'Caseworker search by ethos case reference', extra_headers: headers_from_idam_client)
+        resp = get_request_with_login(url, log_subject: 'Caseworker search by ethos case reference', extra_headers: extra_headers.merge(headers_from_idam_client))
         unless config.document_store_url_rewrite == false
           resp = reverse_rewrite_document_store_urls(resp)
         end
@@ -169,21 +169,21 @@ module EtCcdClient
     # @param [String] reference The ethos case reference number to search for
     # @param [String] case_type_id The case type ID to set the search scope to
     # @return [Hash] The case object returned from the server
-    def caseworker_search_latest_by_ethos_case_reference(reference, case_type_id:)
-      results = caseworker_search_by_ethos_case_reference(reference, case_type_id: case_type_id, page: 1, sort_direction: 'desc')
+    def caseworker_search_latest_by_ethos_case_reference(reference, case_type_id:, extra_headers: {})
+      results = caseworker_search_by_ethos_case_reference(reference, case_type_id: case_type_id, page: 1, sort_direction: 'desc', extra_headers: extra_headers)
       results.first
     end
 
 
-    def caseworker_cases_pagination_metadata(case_type_id:, query: {})
+    def caseworker_cases_pagination_metadata(case_type_id:, query: {}, extra_headers: {})
       logger.tagged('EtCcdClient::Client') do
         tpl = Addressable::Template.new(config.cases_pagination_metadata_url)
         url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, query: query).to_s
-        get_request_with_login(url, log_subject: 'Caseworker cases pagination metadata', extra_headers: headers_from_idam_client)
+        get_request_with_login(url, log_subject: 'Caseworker cases pagination metadata', extra_headers: extra_headers.merge(headers_from_idam_client))
       end
     end
 
-    def caseworker_update_case_documents(event_token:, files:, case_id:, case_type_id:)
+    def caseworker_update_case_documents(event_token:, files:, case_id:, case_type_id:, extra_headers: {})
       tpl = Addressable::Template.new(config.case_events_url)
       url = tpl.expand(uid: idam_client.user_details['id'], jid: config.jurisdiction_id, ctid: case_type_id, cid: case_id).to_s
       logger.tagged('EtCcdClient::Client') do
@@ -199,7 +199,7 @@ module EtCcdClient
           event_token: event_token,
           ignore_warning: false
         }.to_json
-        post_request_with_login(url, payload, log_subject: 'Caseworker update documents', extra_headers: headers_from_idam_client)
+        post_request_with_login(url, payload, log_subject: 'Caseworker update documents', extra_headers: extra_headers.merge(headers_from_idam_client))
       end
     end
 
