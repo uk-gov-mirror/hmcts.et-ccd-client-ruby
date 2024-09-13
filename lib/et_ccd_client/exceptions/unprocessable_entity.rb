@@ -14,7 +14,7 @@ module EtCcdClient
         end
         return super if field_errors.nil?
 
-        "#{super} - #{field_errors.join(', ')}"
+        "#{super} - #{field_errors.join(', ')}\n\nOriginal response:\n\n#{response.body}"
       end
 
     end
